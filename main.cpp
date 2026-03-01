@@ -3,6 +3,8 @@
 #include <string>
 
 int main() {
+    // std::ifstream inputFile = std::ifstream("data.txt");
+    // std::ifstream inputFile{"data.txt"};
     std::ifstream inputFile("data.txt");
 
     if (!inputFile.is_open()) {

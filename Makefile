@@ -4,6 +4,9 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic
 TARGET = main
 SRC = main.cpp
 
+run: all
+	@./$(TARGET)
+
 all: $(TARGET)
 
 $(TARGET): $(SRC)
