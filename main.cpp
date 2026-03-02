@@ -3,19 +3,18 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <charconv>
+#include <sstream>
 
-std::optional<int> extract_num(std::string str) {
-    std::optional<int> num = std::nullopt;
+std::optional<int> extract_num(std::string_view str) {
+    int value;
+    auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
 
-    try {
-        num = std::stoi(str);
-    } catch (const std::invalid_argument& e) {
-        std::cerr << "Invalid input: " << str << std::endl;
-    } catch (const std::out_of_range& e) {
-        std::cerr << "Number too large" << std::endl;
+    if (ec == std::errc()) { // std::errc() is a default constructor, it is an enum std::errc::stuff_here
+        return value;
     }
 
-    return num;
+    return std::nullopt;
 }
 
 int main() {
@@ -27,37 +26,29 @@ int main() {
     }
 
     std::vector<std::vector<std::optional<int>>> sudoku;
+    sudoku.reserve(4); // this one is 4x4
 
     std::string line;
-
     while (std::getline(inputFile, line)) {
-        std::string num_buffer = "";
-        std::vector<std::optional<int>> sudoku_line;
+        if (line.empty()) continue;
 
-        for (unsigned long i = 0; i < line.length(); i++) {
-            if (line[i] == ' ') {
-                auto num = extract_num(num_buffer);
-                num_buffer = "";
-                sudoku_line.push_back(num);
+        std::vector<std::optional<int>> row;
+        row.reserve(4);
 
-                continue;
-            }
-
-            num_buffer.push_back(line[i]);
+        std::stringstream ss(line);
+        std::string temp;
+        while (ss >> temp) {
+            row.push_back(extract_num(temp));
         }
 
-        auto num = extract_num(num_buffer);
-        sudoku_line.push_back(num);
-        sudoku.push_back(sudoku_line);
-        sudoku_line.clear();
+        sudoku.push_back(std::move(row));
     }
 
-    for (const auto& sudoku_line : sudoku) {
-        for (const auto& num : sudoku_line) {
-            std::cout << num.value_or(0);
+    for (const auto& row : sudoku) {
+        for (const auto& cell : row) {
+            std::cout << cell.value_or(0) << " ";
         }
-
-        std::cout << std::endl;
+        std::cout << "\n";
     }
 
     return 0;
