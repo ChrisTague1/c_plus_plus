@@ -1,21 +1,10 @@
 #include <fstream>
 #include <iostream>
-#include <optional>
 #include <string>
 #include <vector>
-#include <charconv>
 #include <sstream>
 
-std::optional<int> extract_num(std::string_view str) {
-    int value;
-    auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
-
-    if (ec == std::errc()) { // std::errc() is a default constructor, it is an enum std::errc::stuff_here
-        return value;
-    }
-
-    return std::nullopt;
-}
+#include "parsing/extract_num.h"
 
 int main() {
     std::ifstream inputFile("data.txt");

@@ -2,7 +2,7 @@ CXX = clang++
 CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic
 
 TARGET = main
-SRC = main.cpp
+SRC = main.cpp parsing/extract_num.cpp
 
 run: all
 	@./$(TARGET)
