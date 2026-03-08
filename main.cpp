@@ -12,8 +12,8 @@ using Sudoku = std::vector<std::vector<std::optional<int>>>;
 const int SUDOKU_SIZE = 4;
 const int SUDOKU_ROOT = static_cast<int>(std::sqrt(SUDOKU_SIZE));
 
-int extract_sudoku(std::string filename, Sudoku& sudoku) {
-    std::ifstream inputFile(filename);
+int extract_sudoku(const std::string_view filename, Sudoku& sudoku) {
+    std::ifstream inputFile(filename.data());
 
     if (!inputFile.is_open()) {
         std::cerr << "Error: Sudoku file could not be opened!" << std::endl;
