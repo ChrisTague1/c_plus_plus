@@ -3,12 +3,14 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cmath>
 
 #include "parsing/extract_num.h"
 
 using Sudoku = std::vector<std::vector<std::optional<int>>>;
 
 const int SUDOKU_SIZE = 4;
+const int SUDOKU_ROOT = static_cast<int>(std::sqrt(SUDOKU_SIZE));
 
 int extract_sudoku(std::string filename, Sudoku& sudoku) {
     std::ifstream inputFile(filename);
@@ -42,7 +44,31 @@ int extract_sudoku(std::string filename, Sudoku& sudoku) {
 }
 
 bool value_works(const Sudoku& sudoku, int value, int x, int y) {
-    return false;
+    auto& row = sudoku[x];
+    for (int i = 0; i < SUDOKU_SIZE; i++) {
+        if (row[i] == value) {
+            return false;
+        }
+    }
+
+    for (int i = 0; i < SUDOKU_SIZE; i++) {
+        if (sudoku[i][y] == value) {
+            return false;
+        }
+    }
+
+    int x_square = x / SUDOKU_ROOT;
+    int y_square = y / SUDOKU_ROOT;
+
+    for (int i = x_square * SUDOKU_ROOT; i < (x_square + 1) * SUDOKU_ROOT; i++) {
+        for (int j = y_square * SUDOKU_ROOT; j < (y_square + 1) * SUDOKU_ROOT; j++) {
+            if (sudoku[i][j] == value) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 int solve_sudoku(Sudoku& sudoku) {
@@ -66,7 +92,7 @@ int solve_sudoku(Sudoku& sudoku) {
         }
     }
 
-    return -1;
+    return 0;
 }
 
 void print_sudoku(Sudoku& sudoku) {
@@ -90,6 +116,8 @@ int main() {
     if (solve_sudoku(sudoku)) {
         std::cerr << "Could not solve sudoku" << std::endl;
         return 2;
+    } else {
+        std::cout << "\nFound solution..." << "\n\n";
     }
 
     print_sudoku(sudoku);
