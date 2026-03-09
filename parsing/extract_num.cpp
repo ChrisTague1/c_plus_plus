@@ -1,7 +1,7 @@
 #include "extract_num.h"
 #include <charconv>
 
-std::optional<int> extract_num(std::string_view str) {
+int extract_num(std::string_view str) {
     int value;
     auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
 
@@ -9,5 +9,5 @@ std::optional<int> extract_num(std::string_view str) {
         return value;
     }
 
-    return std::nullopt;
+    return 0;
 }

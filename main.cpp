@@ -7,12 +7,12 @@
 
 #include "parsing/extract_num.h"
 
-using Sudoku = std::vector<std::vector<std::optional<int>>>;
+constexpr int SUDOKU_ROOT = 2;
+constexpr int SUDOKU_SIZE = SUDOKU_ROOT * SUDOKU_ROOT;
 
-const int SUDOKU_SIZE = 4;
-const int SUDOKU_ROOT = static_cast<int>(std::sqrt(SUDOKU_SIZE));
+using Sudoku = std::array<int, SUDOKU_SIZE * SUDOKU_SIZE>;
 
-int extract_sudoku(const std::string_view filename, Sudoku& sudoku) {
+int extract_sudoku(const std::string_view filename, Sudoku& sudoku) { // todo no error handling
     std::ifstream inputFile(filename.data());
 
     if (!inputFile.is_open()) {
@@ -20,22 +20,18 @@ int extract_sudoku(const std::string_view filename, Sudoku& sudoku) {
         return 1;
     }
 
-    sudoku.reserve(SUDOKU_SIZE);
+    int i = 0;
 
     std::string line;
     while (std::getline(inputFile, line)) {
         if (line.empty()) continue;
 
-        std::vector<std::optional<int>> row;
-        row.reserve(SUDOKU_SIZE);
-
         std::stringstream ss(line);
         std::string temp;
-        while (ss >> temp) {
-            row.push_back(extract_num(temp));
-        }
 
-        sudoku.push_back(std::move(row));
+        while (ss >> temp && i < SUDOKU_SIZE * SUDOKU_SIZE) {
+            sudoku[i++] = extract_num(temp);
+        }
     }
 
     inputFile.close();
@@ -43,26 +39,34 @@ int extract_sudoku(const std::string_view filename, Sudoku& sudoku) {
     return 0;
 }
 
-bool value_works(const Sudoku& sudoku, int value, int x, int y) {
-    auto& row = sudoku[x];
-    for (int i = 0; i < SUDOKU_SIZE; i++) {
-        if (row[i] == value) {
+bool value_works(const Sudoku& sudoku, int value, int i) {
+    std::cout << "Checking rows" << "\n";
+    int row_ind = i / SUDOKU_SIZE;
+    int row = row_ind * SUDOKU_SIZE;
+    for (int x = row; x < row + SUDOKU_SIZE; x++) {
+        if (sudoku[x] == value) {
             return false;
         }
     }
 
-    for (int i = 0; i < SUDOKU_SIZE; i++) {
-        if (sudoku[i][y] == value) {
+    std::cout << "Checking cols" << "\n";
+    int col_ind = i % SUDOKU_SIZE;
+    for (int x = 0; x < SUDOKU_SIZE; x++) {
+        if (sudoku[x * SUDOKU_SIZE + col_ind] == value) {
             return false;
         }
     }
 
-    int x_square = x / SUDOKU_ROOT;
-    int y_square = y / SUDOKU_ROOT;
+    int row_sqr = (row_ind / SUDOKU_ROOT) * SUDOKU_ROOT;
+    int col_sqr = (col_ind / SUDOKU_ROOT) * SUDOKU_ROOT;
 
-    for (int i = x_square * SUDOKU_ROOT; i < (x_square + 1) * SUDOKU_ROOT; i++) {
-        for (int j = y_square * SUDOKU_ROOT; j < (y_square + 1) * SUDOKU_ROOT; j++) {
-            if (sudoku[i][j] == value) {
+    for (int x = 0; x < SUDOKU_ROOT; x++) {
+        row = row_sqr + x;
+
+        for (int y = 0; y < SUDOKU_ROOT; y++) {
+            int col = col_sqr + y;
+
+            if (sudoku[row * SUDOKU_SIZE + col] == value) {
                 return false;
             }
         }
@@ -72,23 +76,20 @@ bool value_works(const Sudoku& sudoku, int value, int x, int y) {
 }
 
 int solve_sudoku(Sudoku& sudoku) {
-    for (int x = 0; x < SUDOKU_SIZE; x++) {
-        const auto& row = sudoku[x];
+    for (int i = 0; i < SUDOKU_SIZE * SUDOKU_SIZE; i++) {
+        if (sudoku[i] == 0) {
+            for (int v = 1; v <= SUDOKU_SIZE; v++) {
+                std::cout << "Checking " << v << " at " << i << "\n";
+                if (value_works(sudoku, v, i)) {
+                    sudoku[i] = v;
 
-        for (int y = 0; y < SUDOKU_SIZE; y++) {
-            const auto& col = row[y];
-
-            if (!col.has_value()) {
-                for (int i = 1; i <= SUDOKU_SIZE; i++) {
-                    if (value_works(sudoku, i, x, y)) {
-                        sudoku[x][y] = i;
-
-                        if (!solve_sudoku(sudoku)) {
-                            return 0;
-                        }
+                    if (!solve_sudoku(sudoku)) {
+                        return 0;
                     }
                 }
             }
+
+            return -1;
         }
     }
 
@@ -96,10 +97,11 @@ int solve_sudoku(Sudoku& sudoku) {
 }
 
 void print_sudoku(Sudoku& sudoku) {
-    for (const auto& row : sudoku) {
-        for (const auto& cell : row) {
-            std::cout << cell.value_or(0) << " ";
+    for (int i = 0; i < SUDOKU_SIZE; i++) {
+        for (int j = 0; j < SUDOKU_SIZE; j++) {
+            std::cout << sudoku[i * SUDOKU_SIZE + j] << " ";
         }
+
         std::cout << "\n";
     }
 }
