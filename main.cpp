@@ -4,13 +4,14 @@
 #include <vector>
 #include <sstream>
 #include <cmath>
+#include <chrono>
 
 #include "parsing/extract_num.h"
 
 constexpr int SUDOKU_ROOT = 3;
 constexpr int SUDOKU_SIZE = SUDOKU_ROOT * SUDOKU_ROOT;
 
-using Sudoku = std::array<int, SUDOKU_SIZE * SUDOKU_SIZE>;
+using Sudoku = std::array<char, SUDOKU_SIZE * SUDOKU_SIZE>;
 
 int extract_sudoku(const std::string_view filename, Sudoku& sudoku) { // todo no error handling
     std::ifstream inputFile(filename.data());
@@ -97,12 +98,15 @@ int solve_sudoku(Sudoku& sudoku) {
 void print_sudoku(Sudoku& sudoku) {
     for (int i = 0; i < SUDOKU_SIZE; i++) {
         for (int j = 0; j < SUDOKU_SIZE; j++) {
-            std::cout << sudoku[i * SUDOKU_SIZE + j] << " ";
+            std::cout << static_cast<int>(sudoku[i * SUDOKU_SIZE + j]) << " ";
         }
 
         std::cout << "\n";
     }
 }
+
+// constexpr long int ITERATIONS = 100'000'000;
+constexpr long int ITERATIONS = 100;
 
 int main() {
     Sudoku sudoku;
@@ -113,12 +117,23 @@ int main() {
 
     print_sudoku(sudoku);
 
-    if (solve_sudoku(sudoku)) {
-        std::cerr << "Could not solve sudoku" << std::endl;
-        return 2;
-    } else {
-        std::cout << "\nFound solution..." << "\n\n";
+    Sudoku original = sudoku;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (long int iter = 0; iter < ITERATIONS; iter++) {
+        sudoku = original;
+        if (solve_sudoku(sudoku)) {
+            std::cerr << "Could not solve sudoku" << std::endl;
+            return 2;
+        }
     }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+    std::cout << "\nFound solution (" << ITERATIONS << " iterations in "
+              << duration.count() << " ms)..." << "\n\n";
 
     print_sudoku(sudoku);
 
