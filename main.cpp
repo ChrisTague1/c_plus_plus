@@ -7,7 +7,7 @@
 
 #include "parsing/extract_num.h"
 
-constexpr int SUDOKU_ROOT = 2;
+constexpr int SUDOKU_ROOT = 3;
 constexpr int SUDOKU_SIZE = SUDOKU_ROOT * SUDOKU_ROOT;
 
 using Sudoku = std::array<int, SUDOKU_SIZE * SUDOKU_SIZE>;
@@ -40,7 +40,6 @@ int extract_sudoku(const std::string_view filename, Sudoku& sudoku) { // todo no
 }
 
 bool value_works(const Sudoku& sudoku, int value, int i) {
-    std::cout << "Checking rows" << "\n";
     int row_ind = i / SUDOKU_SIZE;
     int row = row_ind * SUDOKU_SIZE;
     for (int x = row; x < row + SUDOKU_SIZE; x++) {
@@ -49,7 +48,6 @@ bool value_works(const Sudoku& sudoku, int value, int i) {
         }
     }
 
-    std::cout << "Checking cols" << "\n";
     int col_ind = i % SUDOKU_SIZE;
     for (int x = 0; x < SUDOKU_SIZE; x++) {
         if (sudoku[x * SUDOKU_SIZE + col_ind] == value) {
@@ -79,13 +77,13 @@ int solve_sudoku(Sudoku& sudoku) {
     for (int i = 0; i < SUDOKU_SIZE * SUDOKU_SIZE; i++) {
         if (sudoku[i] == 0) {
             for (int v = 1; v <= SUDOKU_SIZE; v++) {
-                std::cout << "Checking " << v << " at " << i << "\n";
                 if (value_works(sudoku, v, i)) {
                     sudoku[i] = v;
 
                     if (!solve_sudoku(sudoku)) {
                         return 0;
                     }
+                    sudoku[i] = 0;
                 }
             }
 
