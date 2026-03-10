@@ -1,27 +1,13 @@
 CXX = clang++
-CXXFLAGS_BASE = -std=c++17 -Wall -Wextra -pedantic
-CXXFLAGS_DEBUG = $(CXXFLAGS_BASE) -g -O0 -fsanitize=address,undefined
-CXXFLAGS_RELEASE = $(CXXFLAGS_BASE) -O3 -march=native -DNDEBUG
+CXXFLAG_BASE = -std=c++17 -Wall -Wextra -pedantic
 
 TARGET = main
-SRC = main.cpp parsing/extract_num.cpp
+SRC = main.cpp
 
-# Default build is debug
-all: debug
+all: build
 
-debug: $(SRC)
-	@$(CXX) $(CXXFLAGS_DEBUG) -o $(TARGET) $(SRC)
+build: $(SRC)
+	@$(CXX) $(CXXFLAG_BASE) -o $(TARGET) $(SRC)
 
-release: $(SRC)
-	@$(CXX) $(CXXFLAGS_RELEASE) -o $(TARGET) $(SRC)
-
-run: debug
+run: build
 	@./$(TARGET)
-
-run-release: release
-	@./$(TARGET)
-
-clean:
-	@rm -f $(TARGET)
-
-.PHONY: all debug release run run-release clean
