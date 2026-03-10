@@ -1,21 +1,19 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 
 using namespace std;
 
 template<typename T>
 string stringify_vector(const vector<T>& v) {
-    string result;
-
-    result += "( ";
-    for (size_t i = 0; i < v.size() ; i++) {
-        result += to_string(v[i]);
-        result += " ";
+    stringstream ss;
+    ss << "( ";
+    for (const auto& item : v) {
+        ss << item << " ";
     }
-    result += ")";
-
-    return result;
+    ss << ")";
+    return ss.str();
 }
 
 int main() {
