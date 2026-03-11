@@ -2,24 +2,67 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <functional>
 
-using namespace std;
+template<typename K, typename V>
+class MyHashMap {
+   private:
+    struct Entry {
+        K key;
+        V value;
+    };
+    std::vector<std::vector<Entry>> data;
+    size_t numBuckets;
+    std::hash<K> hasher;
+   public:
+    MyHashMap(size_t buckets = 20) : numBuckets(buckets) {
+        data.resize(numBuckets);
+    };
 
-template<typename T>
-string stringify_vector(const vector<T>& v) {
-    stringstream ss;
-    ss << "( ";
-    for (const auto& item : v) {
-        ss << item << " ";
+    std::optional<V> get(const K& key) {
+        size_t key_hash = hasher(key);
+
+        std::vector<Entry> bucket = data[key_hash % numBuckets];
+
+        for (const auto& entry : bucket) {
+            if (entry.key == key) {
+                return entry.value;
+            }
+        }
+
+        return std::nullopt;
     }
-    ss << ")";
-    return ss.str();
-}
+
+    bool set(const K& key, V value) {
+        size_t key_hash = hasher(key);
+
+        std::vector<Entry>& bucket = data[key_hash % numBuckets];
+
+        for (auto& entry : bucket) {
+            if (entry.key == key) {
+                entry.value = value;
+                return false;
+            }
+        }
+
+        bucket.push_back(Entry {
+            .key = key,
+            .value = value,
+        });
+
+        return true;
+    }
+};
 
 int main() {
-    vector<int> v = {1, 2, 3};
+    MyHashMap<std::string, int> map;
 
-    cout << stringify_vector(v) << "\n";
+    map.set("hey", 1);
+    map.set("hey", 2);
+    map.set("what are you doing?", 20);
+
+    std::cout << map.get("hey").value_or(-1) << "\n";
+    std::cout << map.get("what are you doing?").value_or(-1) << "\n";
 
     return 0;
 }
