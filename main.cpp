@@ -52,6 +52,19 @@ class MyHashMap {
 
         return true;
     }
+    friend std::ostream& operator<<(std::ostream& os, const MyHashMap& map) {
+        os << "{\n";
+        bool first = true;
+        for (const auto& bucket : map.data) {
+            for (const auto& entry : bucket) {
+                if (!first) os << ",\n";
+                os << "  " << entry.key << ": " << entry.value;
+                first = false;
+            }
+        }
+        os << (first ? "}" : "\n}");
+        return os;
+    }
 };
 
 int main() {
@@ -61,8 +74,7 @@ int main() {
     map.set("hey", 2);
     map.set("what are you doing?", 20);
 
-    std::cout << map.get("hey").value_or(-1) << "\n";
-    std::cout << map.get("what are you doing?").value_or(-1) << "\n";
+    std::cout << map << "\n";
 
     return 0;
 }
