@@ -23,13 +23,14 @@ class MyHeap {
     }
 
     void percolate_down(size_t index) {
-        if (index == data.size() - 1) return;
-
         size_t left_child_index = 2 * index + 1;
         size_t right_child_index = 2 * index + 2;
+
+        if (left_child_index >= data.size()) return;
+
         size_t temp_index;
 
-        if (data.size() == right_child_index) {
+        if (right_child_index >= data.size()) {
             temp_index = left_child_index;
         } else {
             if (data[left_child_index] < data[right_child_index]) {
@@ -39,7 +40,7 @@ class MyHeap {
             }
         }
 
-        if (data[index] < data[temp_index]) {
+        if (data[temp_index] < data[index]) {
             T temp = data[temp_index];
             data[temp_index] = data[index];
             data[index] = temp;
@@ -79,6 +80,16 @@ class MyHeap {
         return std::nullopt;
     }
 
+    MyHeap& operator<<(const T& value) {
+        put(value);
+        return *this;
+    }
+
+    MyHeap& operator>>(T& value) {
+        value = pop();
+        return *this;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const MyHeap& heap) {
         os << "( ";
 
@@ -99,13 +110,15 @@ class MyHeap {
 int main() {
     MyHeap<int> heap;
 
-    heap.put(1);
-    heap.put(4);
-    heap.put(5);
-    heap.put(2);
-    heap.pop();
+    heap << 1 << 4 << 5 << 2;
 
     std::cout << heap << "\n";
+
+    int value;
+
+    heap >> value;
+
+    std::cout << value << "\n";
 
     return 0;
 }
