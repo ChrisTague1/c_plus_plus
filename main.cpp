@@ -1,80 +1,111 @@
 #include <iostream>
 #include <vector>
-#include <string>
-#include <sstream>
-#include <functional>
 
-template<typename K, typename V>
-class MyHashMap {
+template <typename T>
+class MyHeap {
    private:
-    struct Entry {
-        K key;
-        V value;
-    };
-    std::vector<std::vector<Entry>> data;
-    size_t numBuckets;
-    std::hash<K> hasher;
-   public:
-    MyHashMap(size_t buckets = 20) : numBuckets(buckets) {
-        data.resize(numBuckets);
-    };
+    std::vector<T> data;
 
-    std::optional<V> get(const K& key) {
-        size_t key_hash = hasher(key);
+    void percolate_up(size_t index) {
+        if (index == 0) return;
 
-        std::vector<Entry> bucket = data[key_hash % numBuckets];
+        size_t parentIndex = (index - 1) / 2;
 
-        for (const auto& entry : bucket) {
-            if (entry.key == key) {
-                return entry.value;
+        if (data[index] < data[parentIndex]) {
+            T temp = data[index];
+            data[index] = data[parentIndex];
+            data[parentIndex] = temp;
+
+            percolate_up(parentIndex);
+        }
+
+        return;
+    }
+
+    void percolate_down(size_t index) {
+        if (index == data.size() - 1) return;
+
+        size_t left_child_index = 2 * index + 1;
+        size_t right_child_index = 2 * index + 2;
+        size_t temp_index;
+
+        if (data.size() == right_child_index) {
+            temp_index = left_child_index;
+        } else {
+            if (data[left_child_index] < data[right_child_index]) {
+                temp_index = left_child_index;
+            } else {
+                temp_index = right_child_index;
             }
+        }
+
+        if (data[index] < data[temp_index]) {
+            T temp = data[temp_index];
+            data[temp_index] = data[index];
+            data[index] = temp;
+
+            percolate_down(temp_index);
+        }
+
+        return;
+    }
+
+   public:
+    void put(T value) {
+        data.push_back(value);
+        size_t index = data.size();
+        percolate_up(index - 1);
+    }
+
+    T pop() {
+        size_t size = data.size();
+        T temp = data[0];
+        data[0] = data[size - 1];
+        data[size - 1] = temp;
+        data.pop_back();
+
+        if (data.size()) {
+            percolate_down(0);
+        }
+
+        return temp;
+    }
+
+    std::optional<T> peak() {
+        if (data.size()) {
+            return data[0];
         }
 
         return std::nullopt;
     }
 
-    bool set(const K& key, V value) {
-        size_t key_hash = hasher(key);
+    friend std::ostream& operator<<(std::ostream& os, const MyHeap& heap) {
+        os << "( ";
 
-        std::vector<Entry>& bucket = data[key_hash % numBuckets];
-
-        for (auto& entry : bucket) {
-            if (entry.key == key) {
-                entry.value = value;
-                return false;
-            }
-        }
-
-        bucket.push_back(Entry {
-            .key = key,
-            .value = value,
-        });
-
-        return true;
-    }
-    friend std::ostream& operator<<(std::ostream& os, const MyHashMap& map) {
-        os << "{\n";
         bool first = true;
-        for (const auto& bucket : map.data) {
-            for (const auto& entry : bucket) {
-                if (!first) os << ",\n";
-                os << "  " << entry.key << ": " << entry.value;
-                first = false;
+        for (const auto& item : heap.data) {
+            if (!first) {
+                os << ", ";
             }
+            first = false;
+            os << item;
         }
-        os << (first ? "}" : "\n}");
+
+        os << " )";
         return os;
     }
 };
 
 int main() {
-    MyHashMap<std::string, int> map;
+    MyHeap<int> heap;
 
-    map.set("hey", 1);
-    map.set("hey", 2);
-    map.set("what are you doing?", 20);
+    heap.put(1);
+    heap.put(4);
+    heap.put(5);
+    heap.put(2);
+    heap.pop();
 
-    std::cout << map << "\n";
+    std::cout << heap << "\n";
 
     return 0;
 }
