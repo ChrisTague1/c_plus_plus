@@ -31,7 +31,11 @@ std::string biggerIsGreater(const std::string& w) {
 
     int i;
 
-    for (i = w.size() - 1; w[i] < w[index]; i--); // is this gonna bite my ass?
+    for (i = w.size() - 1; i >= 0; i--) {
+        if (w[i] > w[index]) {
+            break;
+        }
+    }
 
     ss << w.substr(i, w.size() - 1) << w[index];
 
@@ -42,22 +46,68 @@ std::string biggerIsGreater(const std::string& w) {
     return ss.str();
 }
 
+struct TestCase {
+    std::string input;
+    std::string expected;
+};
+
+void runTests() {
+    std::vector<TestCase> tests = {
+        // Basic cases
+        {"ab",       "ba"},
+        {"bb",       "no answer"},
+        {"hefg",     "hegf"},
+        {"dhck",     "dhkc"},
+        {"dkhc",     "hcdk"},
+
+        // Single char
+        {"a",        "no answer"},
+
+        // Already max permutation (descending)
+        {"dcba",     "no answer"},
+        {"zz",       "no answer"},
+
+        // Already min permutation (ascending)
+        {"abcd",     "abdc"},
+        {"abdc",     "acbd"},
+
+        // Repeated characters
+        {"aab",      "aba"},
+        {"aba",      "baa"},
+
+        // Longer strings
+        {"zzdkhhc",  "zzhcdhk"},
+        {"lmno",     "lmon"},
+        {"fedcbabcd", "fedcbabdc"},
+    };
+
+    int passed = 0;
+    int failed = 0;
+
+    for (const auto& t : tests) {
+        std::string result = biggerIsGreater(t.input);
+        bool ok = (result == t.expected);
+
+        if (ok) {
+            cout << "  ✅ PASS";
+            passed++;
+        } else {
+            cout << "  ❌ FAIL";
+            failed++;
+        }
+
+        cout << "  \"" << t.input << "\" → \"" << result << "\"";
+        if (!ok) {
+            cout << "  (expected \"" << t.expected << "\")";
+        }
+        cout << "\n";
+    }
+
+    cout << "\n── Results: " << passed << " passed, " << failed << " failed, "
+         << tests.size() << " total ──\n";
+}
+
 int main() {
-    // std::priority_queue<char> maxHeap;
-
-    // maxHeap.push('a');
-    // maxHeap.push('d');
-    // maxHeap.push('f');
-    // maxHeap.push('c');
-
-    // cout << "Max heap top: " << maxHeap.top() << "\n";
-
-    // maxHeap.pop();
-
-    // cout << "Max heap top: " << maxHeap.top() << "\n";
-
-    cout << biggerIsGreater("zzdkhhc") << "\n";
-    cout << biggerIsGreater("ab") << "\n";
-
+    runTests();
     return 0;
 }
