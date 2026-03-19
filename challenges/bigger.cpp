@@ -3,12 +3,13 @@
 #include <string>
 #include <iterator>
 #include <sstream>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
 
 std::string biggerIsGreater(const std::string& w) {
-    std::priority_queue<char> heap; // could use one-hot encoding a 32 bit number to do this instead
+    std::priority_queue<char> heap;
 
     bool found = false;
     int index = -1;
@@ -29,19 +30,28 @@ std::string biggerIsGreater(const std::string& w) {
 
     ss << w.substr(0, index);
 
-    int i;
+    char pivot = w[index];
 
-    for (i = w.size() - 1; i >= 0; i--) {
-        if (w[i] > w[index]) {
-            break;
+    std::string temp;
+
+    found = false;
+
+    while (!heap.empty()) {
+        char top = heap.top();
+        heap.pop();
+
+        if (!found && top == pivot) {
+            ss << temp.back();
+            temp.pop_back();
+            found = true;
         }
+
+        temp.push_back(top);
     }
 
-    ss << w.substr(i, w.size() - 1) << w[index];
+    std::reverse(temp.begin(), temp.end());
 
-    for (i = i - 1; i > index; i--) {
-        ss << w[i];
-    }
+    ss << temp;
 
     return ss.str();
 }
