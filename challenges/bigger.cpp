@@ -56,6 +56,27 @@ std::string biggerIsGreater(const std::string& w) {
     return ss.str();
 }
 
+std::string biggerIsGreater2(std::string w) {
+    const int n = static_cast<int>(w.size());
+    if (n <= 1) return "no answer";
+
+    int i = n - 2;
+    while (i >= 0 && w[i] >= w[i + 1])
+        --i;
+
+    if (i < 0) return "no answer";
+
+    int j = n - 1;
+    while (w[j] <= w[i])
+        --j;
+
+    std::swap(w[i], w[j]);
+
+    std::reverse(w.begin() + i + 1, w.end());
+
+    return w;
+}
+
 struct TestCase {
     std::string input;
     std::string expected;
@@ -171,27 +192,31 @@ void runTests() {
     int passed = 0;
     int failed = 0;
 
-    for (const auto& t : tests) {
-        std::string result = biggerIsGreater(t.input);
-        bool ok = (result == t.expected);
-
-        if (ok) {
-            cout << "  ✅ PASS";
-            passed++;
-        } else {
-            cout << "  ❌ FAIL";
-            failed++;
+    auto run = [&](const char* label, auto fn) {
+        int p = 0, f = 0;
+        cout << "\n── " << label << " ──\n";
+        for (const auto& t : tests) {
+            std::string result = fn(t.input);
+            bool ok = (result == t.expected);
+            ok ? ++p : ++f;
+            if (ok) {
+                cout << "  ✅ PASS";
+            } else {
+                cout << "  ❌ FAIL";
+            }
+            cout << "  \"" << t.input << "\" → \"" << result << "\"";
+            if (!ok) cout << "  (expected \"" << t.expected << "\")";
+            cout << "\n";
         }
+        cout << "── " << label << ": " << p << " passed, " << f << " failed, "
+             << tests.size() << " total ──\n";
+        passed += p; failed += f;
+    };
 
-        cout << "  \"" << t.input << "\" → \"" << result << "\"";
-        if (!ok) {
-            cout << "  (expected \"" << t.expected << "\")";
-        }
-        cout << "\n";
-    }
+    run("biggerIsGreater  (original)", [](const std::string& s) { return biggerIsGreater(s); });
+    run("biggerIsGreater2 (improved)", [](const std::string& s) { return biggerIsGreater2(s); });
 
-    cout << "\n── Results: " << passed << " passed, " << failed << " failed, "
-         << tests.size() << " total ──\n";
+    cout << "\n══ TOTAL: " << passed << " passed, " << failed << " failed ══\n";
 }
 
 int main() {
