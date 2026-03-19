@@ -53,32 +53,109 @@ struct TestCase {
 
 void runTests() {
     std::vector<TestCase> tests = {
-        // Basic cases
-        {"ab",       "ba"},
-        {"bb",       "no answer"},
-        {"hefg",     "hegf"},
-        {"dhck",     "dhkc"},
-        {"dkhc",     "hcdk"},
+        // ── Single character (no answer) ──
+        {"a",          "no answer"},
+        {"z",          "no answer"},
+        {"m",          "no answer"},
 
-        // Single char
-        {"a",        "no answer"},
+        // ── Two characters ──
+        {"ab",         "ba"},
+        {"ba",         "no answer"},
+        {"bb",         "no answer"},
+        {"az",         "za"},
+        {"za",         "no answer"},
+        {"mn",         "nm"},
 
-        // Already max permutation (descending)
-        {"dcba",     "no answer"},
-        {"zz",       "no answer"},
+        // ── Already max permutation (fully descending) ──
+        {"dcba",       "no answer"},
+        {"zz",         "no answer"},
+        {"zyx",        "no answer"},
+        {"zzzzz",      "no answer"},
+        {"cba",        "no answer"},
+        {"edcba",      "no answer"},
+        {"rqponm",     "no answer"},
 
-        // Already min permutation (ascending)
-        {"abcd",     "abdc"},
-        {"abdc",     "acbd"},
+        // ── Already min permutation (fully ascending) ──
+        {"abc",        "acb"},
+        {"abcd",       "abdc"},
+        {"abcde",      "abced"},
+        {"abcdef",     "abcdfe"},
+        {"lmno",       "lmon"},
 
-        // Repeated characters
-        {"aab",      "aba"},
-        {"aba",      "baa"},
+        // ── Swap only the last two ──
+        {"abdc",       "acbd"},
+        {"hegf",       "hfeg"},
+        {"dcab",       "dcba"},
+        {"zyab",       "zyba"},
 
-        // Longer strings
-        {"zzdkhhc",  "zzhcdhk"},
-        {"lmno",     "lmon"},
-        {"fedcbabcd", "fedcbabdc"},
+        // ── Pivot is deep in the string ──
+        {"dkhc",       "hcdk"},
+        {"abfedc",     "acbdef"},
+        {"abcfed",     "abdcef"},
+        {"xyzedcba",   "xzabcdey"},
+
+        // ── All same characters (no answer) ──
+        {"aaa",        "no answer"},
+        {"bbbbb",      "no answer"},
+        {"cccccc",     "no answer"},
+
+        // ── Repeated characters mixed ──
+        {"aab",        "aba"},
+        {"aba",        "baa"},
+        {"baa",        "no answer"},
+        {"aabb",       "abab"},
+        {"abab",       "abba"},
+        {"abba",       "baab"},
+        {"baab",       "baba"},
+        {"baba",       "bbaa"},
+        {"bbaa",       "no answer"},
+        {"aaab",       "aaba"},
+        {"aaba",       "abaa"},
+        {"abaa",       "baaa"},
+        {"baaa",       "no answer"},
+        {"aabbc",      "aabcb"},
+        {"abcba",      "acabb"},
+
+        // ── Full permutation chains (verify every step) ──
+        // all permutations of "abc": abc→acb→bac→bca→cab→cba
+        {"acb",        "bac"},
+        {"bac",        "bca"},
+        {"bca",        "cab"},
+        {"cab",        "cba"},
+        {"cba",        "no answer"},
+
+        // all permutations of "112": 112→121→211
+        {"112",        "121"},
+        {"121",        "211"},
+        {"211",        "no answer"},
+
+        // ── Longer strings ──
+        {"hefg",       "hegf"},
+        {"dhck",       "dhkc"},
+        {"zzdkhhc",    "zzhcdhk"},
+        {"fedcbabcd",  "fedcbabdc"},
+        {"abcdefgh",   "abcdefhg"},
+        {"hgfedcba",   "no answer"},
+        {"imhacbfed",  "imhacdbef"},
+
+        // ── Strings with wide character gaps ──
+        {"azcba",      "baacz"},
+        {"amnzyx",     "amxnyz"},
+
+        // ── Near-end pivots ──
+        {"abcedcba",   "abdabcce"},
+        {"xaaa",       "no answer"},
+
+        // ── Ascending then descending ──
+        {"abcdzyx",    "abcxdyz"},
+        {"mnopzyx",    "mnoxpyz"},
+
+        // ── Two-char alphabet longer strings ──
+        {"aabba",      "abaab"},
+        {"baaab",      "baaba"},
+        {"aaabb",      "aabab"},
+        {"bbaba",      "bbbaa"},
+        {"abbba",      "baabb"},
     };
 
     int passed = 0;
