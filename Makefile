@@ -1,5 +1,5 @@
 CXX = clang++
-CXXFLAG_BASE = -std=c++17 -Wall -Wextra -pedantic
+CXXFLAG_BASE = -std=c++20 -Wall -Wextra -pedantic
 
 TARGET = main
 SRC = main.cpp
