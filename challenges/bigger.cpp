@@ -8,6 +8,27 @@
 using std::cout;
 using std::endl;
 
+std::string biggerIsGreater2(std::string w) {
+    const int n = static_cast<int>(w.size());
+    if (n <= 1) return "no answer";
+
+    int i = n - 2;
+    while (i >= 0 && w[i] >= w[i + 1])
+        --i;
+
+    if (i < 0) return "no answer";
+
+    int j = n - 1;
+    while (w[j] <= w[i])
+        --j;
+
+    std::swap(w[i], w[j]);
+
+    std::reverse(w.begin() + i + 1, w.end());
+
+    return w;
+}
+
 std::string biggerIsGreater(const std::string& w) {
     std::priority_queue<char> heap;
 
@@ -56,31 +77,43 @@ std::string biggerIsGreater(const std::string& w) {
     return ss.str();
 }
 
-std::string biggerIsGreater2(std::string w) {
-    const int n = static_cast<int>(w.size());
-    if (n <= 1) return "no answer";
-
-    int i = n - 2;
-    while (i >= 0 && w[i] >= w[i + 1])
-        --i;
-
-    if (i < 0) return "no answer";
-
-    int j = n - 1;
-    while (w[j] <= w[i])
-        --j;
-
-    std::swap(w[i], w[j]);
-
-    std::reverse(w.begin() + i + 1, w.end());
-
-    return w;
-}
 
 struct TestCase {
     std::string input;
     std::string expected;
 };
+
+std::string biggerIsGreater3(const std::string& a) { // Chris' version of the good one
+    std::string w(a);
+
+    if (w.size() <= 1) {
+        return "no answer";
+    }
+
+    int i;
+    for (i = w.size() - 2; i != -1; i--) {
+        if (w[i] < w[i + 1]) {
+            break;
+        }
+    }
+
+    if (i == -1) return "no answer";
+
+    cout << "i = " << i << "\n";
+    char pivot = w[i];
+
+    for (int j = w.size() - 1; j >= 0; j--) {
+        if (w[j] > pivot) {
+            w[i] = w[j];
+            w[j] = pivot;
+            break;
+        }
+    }
+
+    std::reverse(w.begin() + i + 1, w.end());
+
+    return w;
+}
 
 void runTests() {
     std::vector<TestCase> tests = {
@@ -215,6 +248,7 @@ void runTests() {
 
     run("biggerIsGreater  (original)", [](const std::string& s) { return biggerIsGreater(s); });
     run("biggerIsGreater2 (improved)", [](const std::string& s) { return biggerIsGreater2(s); });
+    run("biggerIsGreater3 (improved)", [](const std::string& s) { return biggerIsGreater3(s); });
 
     cout << "\n══ TOTAL: " << passed << " passed, " << failed << " failed ══\n";
 }
