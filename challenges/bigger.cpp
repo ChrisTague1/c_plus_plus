@@ -99,7 +99,6 @@ std::string biggerIsGreater3(const std::string& a) { // Chris' version of the go
 
     if (i == -1) return "no answer";
 
-    cout << "i = " << i << "\n";
     char pivot = w[i];
 
     for (int j = w.size() - 1; j >= 0; j--) {
