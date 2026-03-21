@@ -25,63 +25,47 @@ class MyHeap {
             }
         }
 
-        data[index] = value;
+        data[index] = std::move(value);
     }
 
-    void percolate_down() {
-        size_t index = 0;
-        size_t temp_index;
+    void percolate_down(size_t index) {
         size_t size = data.size();
-
         T value = std::move(data[index]);
 
         while (true) {
-            std::cout << "In while loop" << "\n";
-            temp_index = (2 * index) + 1;
+            size_t left = (2 * index) + 1;
 
-            if (temp_index == size) {
-                temp_index = index;
-                break;
-            };
+            if (left >= size) break;
 
-            size_t right_child = (2 * index) + 2;
+            size_t right = left + 1;
+            size_t largest = (right < size && data[right] > data[left]) ? right : left;
 
-            if (right_child < size && data[right_child] > data[temp_index]) {
-                temp_index = right_child;
-            }
-
-            if (data[temp_index] > value) {
-                data[index] = std::move(data[temp_index]);
-                index = temp_index;
+            if (data[largest] > value) {
+                data[index]  = std::move(data[largest]);
+                index = largest;
             } else {
-                temp_index = index;
                 break;
             }
         }
 
-        data[temp_index] = std::move(value);
+        data[index] = std::move(value);
     }
 
    public:
-    void push(const T& value) {
+    void push(T value) {
         data.push_back(value);
         percolate_up();
     }
 
-    void push(T&& value) {
-        data.push_back(std::move(value));
-        percolate_up();
-    }
-
     std::optional<T> pop() {
-        if (!data.size()) return std::nullopt;
+        if (data.empty()) return std::nullopt;
 
         T value = std::move(data[0]);
-        data[0] = std::move(data[data.size() - 1]);
+        data[0] = std::move(data.back());
         data.pop_back();
 
         if (data.size() > 1) {
-            percolate_down();
+            percolate_down(0);
         }
 
         return value;
