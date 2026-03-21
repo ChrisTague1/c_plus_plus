@@ -9,17 +9,14 @@ class MyHeap {
    private:
     std::vector<T> data;
 
-    void percolate_up() {
-        size_t index = data.size() - 1;
+    void percolate_up(size_t index) {
         T value = std::move(data[index]);
 
-        size_t parent_index = (index - 1) / 2;
-
         while (index != 0) {
+            size_t parent_index = (index - 1) / 2;
             if (value > data[parent_index]) {
                 data[index] = std::move(data[parent_index]);
                 index = parent_index;
-                parent_index = (index - 1) / 2;
             } else {
                 break;
             }
@@ -53,8 +50,8 @@ class MyHeap {
 
    public:
     void push(T value) {
-        data.push_back(value);
-        percolate_up();
+        data.push_back(std::move(value));
+        percolate_up(data.size() - 1);
     }
 
     std::optional<T> pop() {
