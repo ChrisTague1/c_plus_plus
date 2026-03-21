@@ -18,3 +18,8 @@
 - Web crawler
     - host and children
     - creates live dashboard
+
+# Reference Docs
+
+- https://beej.us/guide/bgnet/html/index-wide.html
+- https://www.youtube.com/watch?v=aBYqGD41E9g

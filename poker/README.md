@@ -1,11 +1,11 @@
 # Poker
 
-Multiplayer poker game server and client written in C++17 using Asio for networking.
+Multiplayer poker game server and client written in C++20 using Asio for networking.
 
 ## Dependencies
 
 - CMake 3.20+
-- A C++17 compiler
+- A C++20 compiler
 - [Asio](https://github.com/chriskohlhoff/asio) (fetched automatically by CMake)
 
 ## Build
