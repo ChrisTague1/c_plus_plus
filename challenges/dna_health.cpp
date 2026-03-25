@@ -4,6 +4,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <algorithm>
+#include <format>
 
 using namespace std;
 
@@ -25,7 +26,7 @@ struct GeneDataProgress {
     int health;
 };
 
-void dna_health(
+string dna_health(
     const vector<string>& genes,
     const vector<int>& health,
     const vector<Strand>& strands
@@ -89,13 +90,16 @@ void dna_health(
     auto [min_it, max_it] = minmax_element(data.begin(), data.end());
     
     
-    cout << *min_it << " " << *max_it << endl;
+    string s = format("{} {}", *min_it, *max_it);
+
+    return s;
 }
 
 struct TestCase {
     vector<string> genes;
     vector<int> health;
     vector<Strand> strands;
+    string answer;
 };
 
 int main() {
@@ -107,13 +111,17 @@ int main() {
                 {"caaab", 1, 5},
                 {"xyz", 0, 4},
                 {"bcdybc", 2, 4},
-            }
+            },
+            "0 19"
         },
     };
 
     for (size_t i = 0; i < tests.size(); i++) {
-        cout << "Test " << i << ":\n";
-        dna_health(tests[i].genes, tests[i].health, tests[i].strands);
-        cout << "\n";
+        string result = dna_health(tests[i].genes, tests[i].health, tests[i].strands);
+        if (result == tests[i].answer) {
+            cout << "Test " << i << ": PASS\n";
+        } else {
+            cout << "Test " << i << ": FAIL (expected \"" << tests[i].answer << "\", got \"" << result << "\")\n";
+        }
     }
 }
