@@ -86,7 +86,12 @@ vector<string> the_algo(const vector<string>& dict, const string& input) {
         }
 
         if (trie[current].dict) {
-            output.push_back(trie[trie[current].dict].word.value());
+            int dict = trie[current].dict;
+
+            while (dict) {
+                output.push_back(trie[dict].word.value());
+                dict = trie[dict].dict;
+            }
         }
     }
 
