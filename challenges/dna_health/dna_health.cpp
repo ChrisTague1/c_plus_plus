@@ -1,8 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <string_view>
-#include <unordered_map>
+#include <queue>
 #include <algorithm>
 #include <format>
 
@@ -14,16 +13,11 @@ struct Strand {
     int end;
 };
 
-struct GeneDataOriginal {
-    string gene;
-    int health;
-    int index;
-};
-
-struct GeneDataProgress {
-    string_view gene;
-    // string geneOriginal;
-    int health;
+struct Node {
+    int next[26];
+    vector<int> hits;
+    int fail;
+    int dict;
 };
 
 string dna_health(
@@ -31,68 +25,77 @@ string dna_health(
     const vector<int>& health,
     const vector<Strand>& strands
 ) {
-    vector<int> data;
-    unordered_map<char, vector<GeneDataOriginal>> original;
-    
-    for (int i = 0; i < genes.size(); i++) {
-        string gene = genes[i];
-        original[gene.front()].push_back(GeneDataOriginal {
-            gene,
-            health[i],
-            i
-        });
-    }
-    
-    for (const auto& strand : strands) {
-        // cout << strand.dna << " " << strand.start << " " << strand.end << endl;
-        unordered_map<char, vector<GeneDataProgress>> progress;
-        int total = 0;
-        
-        for (const char& ch : strand.dna) {
-            // cout << "\t" << ch << "\n";
-            auto& gene_progress = progress[ch];
-            for (const auto& gene : original[ch]) {
-                if (gene.index < strand.start || gene.index > strand.end) continue;
-                // cout << "\tGene " << gene.gene << " matches!\n";
-                gene_progress.push_back(GeneDataProgress {
-                    gene.gene,
-                    // gene.gene,
-                    gene.health
-                });
-            }
-            
+    vector<Node> trie(1);
+    int current;
 
-            vector<GeneDataProgress> new_progress;
-            
-            for (auto& gene: gene_progress) {
-                gene.gene.remove_prefix(1);
-                
-                if (gene.gene.empty()) {
-                    // cout << "\tEmptied gene " << gene.geneOriginal  << ", adding " << gene.health << " to health\n";
-                    total += gene.health;
-                } else if (gene.gene.front() == ch) {
-                    // cout << "\tFirst char is the same, pushing back\n";
-                    new_progress.push_back(gene);
-                } else {
-                    // cout << "\tMoving to " << gene.gene.front() << "\n";
-                    progress[gene.gene.front()].push_back(gene);
+    for (int i = 0; i < genes.size(); i++) {
+        current = 0;
+        for (const auto& ch : genes[i]) {
+            if (trie[current].next[ch - 'a']) {
+                current = trie[current].next[ch - 'a'];
+            } else {
+                trie.push_back({});
+                trie[current].next[ch - 'a'] = trie.size() - 1;
+                current = trie.size() - 1;
+            }
+        }
+        trie[current].hits.push_back(i);
+    }
+
+    queue<int> nodeQueue;
+    nodeQueue.push(0);
+
+    while (!nodeQueue.empty()) {
+        int nodeIndex = nodeQueue.front();
+        nodeQueue.pop();
+
+        for (int i = 0; i < 26; i++) {
+            if (trie[nodeIndex].next[i]) {
+                Node& node = trie[trie[nodeIndex].next[i]];
+
+                node.fail = nodeIndex == 0 ? 0 : trie[trie[nodeIndex].fail].next[i];
+                node.dict = trie[node.fail].hits.size() ? node.fail : trie[node.fail].dict;
+
+                nodeQueue.push(trie[nodeIndex].next[i]);
+            } else {
+                trie[nodeIndex].next[i] = nodeIndex == 0 ? 0 : trie[trie[nodeIndex].fail].next[i];
+            }
+        }
+    }
+
+    vector<int> totals;
+
+    for (const auto& strand : strands) {
+        int total = 0;
+        current = 0;
+
+        for (const auto& ch : strand.dna) {
+            current = trie[current].next[ch - 'a'];
+
+            for (const auto& hit : trie[current].hits) {
+                if (hit >= strand.start && hit <= strand.end) {
+                    total += health[hit];
                 }
             }
-            
-            progress[ch] = new_progress;
-        }
-        
-        data.push_back(total);
-        
-        // cout << "\tTotal for " << strand.dna << " is " << total << "\n";
-    }
-    
-    auto [min_it, max_it] = minmax_element(data.begin(), data.end());
-    
-    
-    string s = format("{} {}", *min_it, *max_it);
 
-    return s;
+            if (trie[current].dict) {
+                int dictIndex = trie[current].dict;
+                while (dictIndex) {
+                    for (const auto& hit : trie[dictIndex].hits) {
+                        if (hit >= strand.start && hit <= strand.end) {
+                            total += health[hit];
+                        }
+                    }
+                    dictIndex = trie[dictIndex].dict;
+                }
+            }
+        }
+
+        totals.push_back(total);
+    }
+
+    auto [min_it, max_it] = minmax_element(totals.begin(), totals.end());
+    return format("{} {}", *min_it, *max_it);
 }
 
 struct TestCase {
