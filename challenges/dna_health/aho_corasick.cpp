@@ -9,20 +9,18 @@ using namespace std;
 
 struct Node {
     int next[26];
-    optional<string> word;
+    optional<int> wordIndex;
     int fail;
     int dict;
-    bool isEnd;
 };
 
 vector<string> the_algo(const vector<string>& dict, const string& input) {
     vector<Node> trie(1);
     int current;
 
-
-    for (const auto& item : dict) {
+    for (int i = 0; i < dict.size(); i++) {
         current = 0;
-        for (const auto& ch : item) {
+        for (const auto& ch : dict[i]) {
             if (trie[current].next[ch - 'a']) {
                 current = trie[current].next[ch - 'a'];
             } else {
@@ -32,8 +30,7 @@ vector<string> the_algo(const vector<string>& dict, const string& input) {
             }
         }
 
-        trie[current].isEnd = true;
-        trie[current].word = item;
+        trie[current].wordIndex = i;
     }
 
     queue<int> nodeQueue;
@@ -49,7 +46,7 @@ vector<string> the_algo(const vector<string>& dict, const string& input) {
 
                 n.fail = nodeIndex == 0 ? 0 : trie[trie[nodeIndex].fail].next[i];
                 
-                n.dict = trie[n.fail].isEnd ? n.fail : trie[n.fail].dict;
+                n.dict = trie[n.fail].wordIndex.has_value() ? n.fail : trie[n.fail].dict;
 
                 nodeQueue.push(trie[nodeIndex].next[i]);
             } else {
@@ -70,8 +67,8 @@ vector<string> the_algo(const vector<string>& dict, const string& input) {
         cout << "\t" << trie[i].fail << "\n";
         cout << "\t" << trie[i].dict << "\n";
 
-        if (trie[i].isEnd) {
-            cout << "\t" << trie[i].word.value() << "\n";
+        if (trie[i].wordIndex.has_value()) {
+            cout << "\t" << dict[trie[i].wordIndex.value()] << "\n";
         }
     }
 
@@ -81,16 +78,16 @@ vector<string> the_algo(const vector<string>& dict, const string& input) {
     for (const auto& ch : input) {
         current = trie[current].next[ch - 'a'];
 
-        if (trie[current].isEnd) {
-            output.push_back(trie[current].word.value());
+        if (trie[current].wordIndex.has_value()) {
+            output.push_back(dict[trie[current].wordIndex.value()]);
         }
 
         if (trie[current].dict) {
-            int dict = trie[current].dict;
+            int dictIndex = trie[current].dict;
 
-            while (dict) {
-                output.push_back(trie[dict].word.value());
-                dict = trie[dict].dict;
+            while (dictIndex) {
+                output.push_back(dict[trie[dictIndex].wordIndex.value()]);
+                dictIndex = trie[dictIndex].dict;
             }
         }
     }
