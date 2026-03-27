@@ -63,10 +63,10 @@ string dna_health(
         }
     }
 
-    vector<int> totals;
+    vector<long long> totals;
 
     for (const auto& strand : strands) {
-        int total = 0;
+        long long total = 0;
         current = 0;
 
         for (const auto& ch : strand.dna) {
