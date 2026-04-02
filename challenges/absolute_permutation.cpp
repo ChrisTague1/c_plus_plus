@@ -17,11 +17,7 @@ vector<int> absolutePerms(int n, int k) {
         return output;
     }
 
-    if (n == 1) {
-        return {-1};
-    }
-    
-    if (2 * k % n != 0) return {-1};
+    if (n % (2 * k) != 0) return {-1};
     
     vector<int> output;
     output.reserve(n);
