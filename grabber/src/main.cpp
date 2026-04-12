@@ -5,20 +5,12 @@
 
 namespace fs = std::filesystem;
 
-    // std::ifstream file2("README.md");
-
-    // std::stringstream buffer;
-    // buffer << file2.rdbuf();
-    // std::string content = buffer.str();
-
-    // std::cout << content << std::endl;
-
-void exploreDirectory(const std::string& path) {
+void exploreDirectory(const std::string& path, const std::string& searchTerm) {
     if (!fs::exists(path) || !fs::is_directory(path)) return;
 
     for (const auto& entry : fs::directory_iterator(path)) {
         if (entry.is_directory()) {
-            exploreDirectory(entry.path().relative_path());
+            exploreDirectory(entry.path().relative_path(), searchTerm);
             continue;
         }
 
@@ -27,14 +19,39 @@ void exploreDirectory(const std::string& path) {
         ss << file.rdbuf();
         std::string content = ss.str();
 
-        std::cout << content << std::endl;
+        if (content.find(searchTerm) != std::string::npos) {
+            std::cout << content << std::endl;
+        }
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     std::string path = "test_data";
+    std::string searchTerm = "item";
 
-    exploreDirectory(path);
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+
+        if (arg == "-p" || arg == "--path") {
+            if (i + 1 < argc) {
+                path = argv[++i];
+            } else {
+                std::cerr << "--path requires a directory\n";
+                return 1;
+            }
+        }
+
+        if (arg == "-s" || arg == "--search") {
+            if (i + 1 < argc) {
+                searchTerm = argv[++i];
+            } else {
+                std::cerr << "--search requires a search term\n";
+                return 1;
+            }
+        }
+    }
+
+    exploreDirectory(path, searchTerm);
 
     // try {
     //     if (fs::exists(path) && fs::is_directory(path)) {
