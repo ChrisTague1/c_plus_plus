@@ -1,0 +1,15 @@
+{
+    "folders": [
+        {
+            "name": "c_plus_plus",
+            "path": "."
+        },
+        {
+            "name": "grabber",
+            "path": "grabber"
+        }
+    ],
+    "settings": {
+        "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+    }
+}
