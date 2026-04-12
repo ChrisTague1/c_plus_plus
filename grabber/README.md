@@ -26,3 +26,9 @@ cmake --build build
 src/
 └── main.cpp   # Hello world entry point
 ```
+
+## Random Commands
+
+```bash
+find test_data -type f -exec grep -H "item" {} \;
+```
