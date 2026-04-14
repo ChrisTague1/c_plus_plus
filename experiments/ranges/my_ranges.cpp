@@ -12,8 +12,24 @@ void print(auto&& r, std::string_view label = "") {
     std::cout << std::endl;
 }
 
+struct Player {
+    std::string name;
+    int score;
+};
+
+template <typename Range, typename Comp, typename Proj>
+void my_sort(Range& r, Comp comp, Proj proj) {
+    for (size_t i = 0; i < r.size(); ++i) {
+        for (size_t j = i + 1; j < r.size(); ++j) {
+            if (comp(std::invoke(proj, r[j]), std::invoke(proj, r[i]))) {
+                std::swap(r[i], r[j]);
+            }
+        }
+    }
+}
+
 int main() {
-    {
+    if (0) {
         std::vector<int> v = {5, 2, 8, 1, 9, 3, 7, 4, 6};
 
         std::ranges::sort(v);
@@ -39,6 +55,33 @@ int main() {
         std::cout << "min: " << std::ranges::min(v) << std::endl;
         std::cout << "max: " << std::ranges::max(v) << std::endl;
     }
+
+    if (0) {
+        std::vector<Player> players = {
+            {"Alice", 42},
+            {"Bob", 17},
+            {"Carol", 98},
+            {"Dave", 55},
+        };
+
+        std::ranges::sort(players, std::less{}, &Player::score);
+    }
+
+    std::cout << "Hello there" << std::endl;
+
+    std::vector<Player> players = {
+        {"Alice", 42},
+        {"Bob", 17},
+        {"Carol", 98},
+        {"Dave", 55},
+    };
+
+    my_sort(players, std::less{}, &Player::score);
+
+    auto pm = &Player::score;
+    Player p{"Alice", 42};
+
+    int x = p.*pm;
 
     return 0;
 }

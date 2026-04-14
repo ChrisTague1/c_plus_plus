@@ -3,19 +3,33 @@
 #include <fstream>
 #include <sstream>
 #include <CLI11.hpp>
+#include <thread>
+#include <mutex>
+#include <iterator>
 
 namespace fs = std::filesystem;
 
-void exploreDirectory(const std::string& path, const std::string& searchTerm) {
+std::vector<std::string> shared_container;
+std::mutex container_mutex;
+
+void explore_directory(
+    const std::string& path,
+    const std::string& searchTerm
+) {
     if (!fs::exists(path) || !fs::is_directory(path)) return;
+
+    std::vector<std::string> local_results;
+    std::vector<std::jthread> workers;
 
     for (const auto& entry : fs::directory_iterator(path)) {
         if (entry.is_directory()) {
-            exploreDirectory(entry.path().string(), searchTerm);
-            continue;
+            workers.emplace_back([&]() {
+                explore_directory(entry.path().string(), searchTerm);
+            });
         }
 
         std::ifstream file(entry.path());
+
         if (!file.is_open()) {
             continue;
         }
@@ -24,10 +38,18 @@ void exploreDirectory(const std::string& path, const std::string& searchTerm) {
 
         while (std::getline(file, line)) {
             if (line.find(searchTerm) != std::string::npos) {
-                std::cout << line << std::endl;
+                local_results.push_back(line);
             }
         }
     }
+
+    std::lock_guard<std::mutex> lock(container_mutex);
+    shared_container.reserve(shared_container.size() + local_results.size()); // will this kill performance?
+    shared_container.insert(
+        shared_container.end(),
+        std::make_move_iterator(local_results.begin()),
+        std::make_move_iterator(local_results.end())
+    );
 }
 
 int main(int argc, char* argv[]) {
@@ -41,7 +63,11 @@ int main(int argc, char* argv[]) {
 
     CLI11_PARSE(app, argc, argv);
 
-    exploreDirectory(path, searchTerm);
+    explore_directory(path, searchTerm);
+
+    for (const auto& result : shared_container) {
+        std::cout << result << std::endl;
+    }
 
     return 0;
 }
