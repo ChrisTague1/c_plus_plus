@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <iterator>
+#include <deque>
 
 namespace fs = std::filesystem;
 
