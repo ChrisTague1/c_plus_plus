@@ -22,9 +22,12 @@ void explore_directory(
     std::vector<std::jthread> workers;
 
     for (const auto& entry : fs::directory_iterator(path)) {
+        auto path = entry.path().string();
+
         if (entry.is_directory()) {
-            workers.emplace_back([&]() {
-                explore_directory(entry.path().string(), searchTerm);
+            workers.emplace_back([=] {
+                std::cout << "Entering dir " << path << std::endl;
+                explore_directory(path, searchTerm);
             });
         }
 
