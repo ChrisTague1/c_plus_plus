@@ -7,6 +7,7 @@
 #include <mutex>
 #include <iterator>
 #include <deque>
+#include <condition_variable>
 
 namespace fs = std::filesystem;
 
@@ -27,7 +28,7 @@ void explore_directory(
 
         if (entry.is_directory()) {
             workers.emplace_back([=] {
-                std::cout << "Entering dir " << path << std::endl;
+                // std::cout << "Entering dir " << path << std::endl;
                 explore_directory(path, searchTerm);
             });
         }
@@ -56,6 +57,10 @@ void explore_directory(
     );
 }
 
+void worker(int id, std::string& searchTerm) {
+
+}
+
 int main(int argc, char* argv[]) {
     CLI::App app{"Grabber"};
 
@@ -72,6 +77,7 @@ int main(int argc, char* argv[]) {
     for (const auto& result : shared_container) {
         std::cout << result << std::endl;
     }
+    std::cout << "Found " << shared_container.size() << " total results" << std::endl;
 
     return 0;
 }
