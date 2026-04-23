@@ -16,21 +16,25 @@ std::deque<std::string> dq;
 std::vector<std::string> results;
 std::mutex mtx;
 std::condition_variable_any cv; // TODO is an atomic or something to track when it is done
+int active_workers = 0;
 
 void worker(std::stop_token st, int id, std::string searchTerm) {
+    std::cout << "Thread " << id << " started, no lock yet\n";
     std::unique_lock lock(mtx);
+    std::cout << "Thread " << id << " got the lock\n";
 
     while (true) {
         cv.wait(lock, st, []() {
             return !dq.empty();
         });
 
-        if (st.stop_requested() && dq.empty()) {
+        if (st.stop_requested() && dq.empty() && !active_workers) {
             std::cout << "Worker " << id << " stopping\n";
             break;
         }
 
         while (!dq.empty()) {
+            ++active_workers;
             std::string path = std::move(dq.back());
             dq.pop_back();
 
@@ -78,6 +82,7 @@ void worker(std::stop_token st, int id, std::string searchTerm) {
             for (auto& dir : further_dirs) {
                 dq.emplace_back(std::move(dir));
             }
+            --active_workers;
         }
     }
 }
@@ -98,18 +103,25 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::vector<std::jthread> workers;
-    workers.reserve(10);
+    int NUM_THREADS = 2;
 
-    for (int i = 0; i < 10; i++) {
+    std::vector<std::jthread> workers;
+    workers.reserve(NUM_THREADS);
+
+    for (int i = 0; i < NUM_THREADS; i++) {
         workers.emplace_back(worker, i, searchTerm);
     }
 
+    std::cout << "Main thread done creating threads\n";
+
     {
         std::lock_guard lock(mtx);
+        std::cout << "Main thread got the lock\n";
         dq.emplace_back(path);
     }
+    std::cout << "Main thread no longer has the lock\n";
     cv.notify_one();
+    std::cout << "Main thread notified one\n";
 
     return 0;
 }
