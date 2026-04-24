@@ -15,8 +15,9 @@ namespace fs = std::filesystem;
 std::deque<std::string> dq;
 std::vector<std::string> results;
 std::mutex mtx;
-std::condition_variable_any cv; // TODO is an atomic or something to track when it is done
+std::condition_variable cv; // TODO is an atomic or something to track when it is done
 int active_workers = 0;
+bool done = false;
 
 void worker(std::stop_token st, int id, std::string searchTerm) {
     std::cout << "Thread " << id << " started, no lock yet\n";
@@ -24,27 +25,23 @@ void worker(std::stop_token st, int id, std::string searchTerm) {
     std::cout << "Thread " << id << " got the lock\n";
 
     while (true) {
-        cv.wait(lock, st, []() {
-            return !dq.empty();
+        cv.wait(lock, [&]() {
+            std::cout << "CV " << id << "\n";
+            return st.stop_requested() || done || !dq.empty();
         });
 
-        if (st.stop_requested() && dq.empty() && !active_workers) {
+        if (st.stop_requested() || done) {
             std::cout << "Worker " << id << " stopping\n";
             break;
         }
 
         while (!dq.empty()) {
             ++active_workers;
+
             std::string path = std::move(dq.back());
             dq.pop_back();
 
-            bool should_notify = !dq.empty();
-
             lock.unlock();
-
-            if (should_notify) {
-                cv.notify_all();
-            }
 
             std::vector<std::string> local_results;
             std::vector<std::string> further_dirs;
@@ -58,7 +55,6 @@ void worker(std::stop_token st, int id, std::string searchTerm) {
                 }
 
                 std::ifstream file(path);
-
                 if (!file.is_open()) continue;
 
                 std::string line;
@@ -82,7 +78,14 @@ void worker(std::stop_token st, int id, std::string searchTerm) {
             for (auto& dir : further_dirs) {
                 dq.emplace_back(std::move(dir));
             }
+
             --active_workers;
+
+            if (dq.empty() && active_workers == 0) {
+                done = true;
+            }
+
+            cv.notify_all();
         }
     }
 }
@@ -92,9 +95,11 @@ int main(int argc, char* argv[]) {
 
     std::string path = "test_data";
     std::string searchTerm = "item";
+    int num_threads = 2;
 
     app.add_option("-p,--path", path, "Path to directory to grab from");
     app.add_option("-s,--search", searchTerm, "Term to search for");
+    app.add_option("-n,--num", num_threads, "Number of threads to spawn");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -103,25 +108,31 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    int NUM_THREADS = 2;
-
-    std::vector<std::jthread> workers;
-    workers.reserve(NUM_THREADS);
-
-    for (int i = 0; i < NUM_THREADS; i++) {
-        workers.emplace_back(worker, i, searchTerm);
-    }
-
-    std::cout << "Main thread done creating threads\n";
-
     {
-        std::lock_guard lock(mtx);
-        std::cout << "Main thread got the lock\n";
-        dq.emplace_back(path);
+        std::vector<std::jthread> workers;
+        workers.reserve(num_threads);
+
+        for (int i = 0; i < num_threads; i++) {
+            workers.emplace_back(worker, i, searchTerm);
+        }
+
+        std::cout << "Main thread done creating threads\n";
+
+        {
+            std::lock_guard lock(mtx);
+            std::cout << "Main thread got the lock\n";
+            dq.emplace_back(path);
+        }
+        std::cout << "Main thread no longer has the lock\n";
+        cv.notify_all();
     }
-    std::cout << "Main thread no longer has the lock\n";
-    cv.notify_one();
-    std::cout << "Main thread notified one\n";
+
+    std::cout << "DONE NOW\n";
+
+    for (const auto& r : results) {
+        std::cout << r << "\n";
+    }
+    std::cout << "Total results: " << results.size() << "\n";
 
     return 0;
 }
