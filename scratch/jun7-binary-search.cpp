@@ -2,12 +2,35 @@
 #include <iostream>
 #include <vector>
 
+/*
+This one requires post-check to see if it actually hit, returns where it should go if it isn't hit
+*/
+[[nodiscard]] int binarySearch2(const std::vector<int>& nums, int target) {
+    int left = -1;
+    int right = static_cast<int>(nums.size());
+
+    while (right - left > 1) {
+        int mid = left + (right - left) / 2;
+
+        if (nums[mid] < target) {
+            left = mid;
+        } else {
+            right = mid;
+        }
+    }
+
+    return right;
+}
+
+/*
+Exact match binary search
+*/
 int binarySearch(const std::vector<int>& nums, int target) {
     int left = -1;
     int right = nums.size();
     int mid;
 
-    while (right - left - 1) {
+    while (right - left > 1) {
         mid = left + (right - left) / 2;
 
         if (nums[mid] == target) {
