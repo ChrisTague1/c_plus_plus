@@ -3,21 +3,15 @@
 #include <vector>
 
 int binarySearch(const std::vector<int>& nums, int target) {
-    if (nums.size() == 0) return -1;
-
     int left = -1;
     int right = nums.size();
     int mid;
 
-    while (true) {
-        mid = (left + right) / 2;
+    while (right - left - 1) {
+        mid = left + (right - left) / 2;
 
         if (nums[mid] == target) {
             return mid;
-        }
-
-        if (left == mid || right == mid) {
-            return -1;
         }
 
         if (nums[mid] < target) {
@@ -26,12 +20,15 @@ int binarySearch(const std::vector<int>& nums, int target) {
             right = mid;
         }
     }
+
+    return -1;
 }
 
 int main() {
-    std::cout << (-1 / 2 == 0) << std::endl;
-    
-
+    /*
+    doing left + (right - left) / 2 keeps the biggest number you see smaller
+    you'll never see numbers larger than right which we know fits
+    */
     std::vector<int> nums = {1, 3, 5, 7, 9, 11};
 
     assert(binarySearch(nums, 1) == 0);
