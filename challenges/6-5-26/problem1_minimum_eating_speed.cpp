@@ -21,9 +21,49 @@ Constraints to assume:
 - 1 <= piles[i] <= 1000000000
 - piles.size() <= h <= 1000000000
 */
+// TODO if you make left and right point at valid values you can just return right without tracking best
+/*
+- Write a massive test case generator
+- benchmark a worse solution
+- benchmark your own
+- optimize
+*/
 long long minimumEatingSpeed(const vector<int>& piles, long long h) {
-    // TODO: implement
-    return -1;
+    int max = 0;
+    int size = static_cast<int>(piles.size());
+
+    for (int i = 0; i < size; ++i) {
+        if (piles[i] > max) {
+            max = piles[i];
+        }
+    }
+
+    int best = max;
+
+    long long left = 0;
+    long long right = max + 1;
+
+    while (right - left > 1) {
+        int mid = left + (right - left) / 2;
+        int total = 0;
+
+        for (int i = 0; i < size; ++i) {
+            int a = piles[i];
+            int count = a / mid + (a % mid != 0);
+            total += count;
+
+            if (total > h) break;
+        }
+
+        if (total <= h && mid < best) {
+            best = mid;
+            right = mid;
+        } else {
+            left = mid;
+        }
+    }
+
+    return best;
 }
 
 template <typename T>
