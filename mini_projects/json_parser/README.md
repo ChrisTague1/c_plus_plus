@@ -1,0 +1,1 @@
+- `clang++ -std=c++20 mini_projects/json_parser/main.cpp && ./a.out mini_projects/json_parser/sample.json`

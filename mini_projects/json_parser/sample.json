@@ -1,0 +1,11 @@
+{
+  "string": "hello world",
+  "number": 42,
+  "boolean": true,
+  "null": null,
+  "array": [1, "two", false, null],
+  "object": {
+    "nested_string": "deep",
+    "nested_number": 3.14
+  }
+}
