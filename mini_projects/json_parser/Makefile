@@ -1,10 +1,10 @@
 CXX = clang++
 CXXFLAGS_BASE = -std=c++20 -Wall -Wextra -pedantic
-CXXFLAGS_DEBUG = $(CXXFLAGS_BASE) -g -O0 -fsanitize=address,undefined
+CXXFLAGS_DEBUG = $(CXXFLAGS_BASE) -g -O0 -fsanitize=undefined
 CXXFLAGS_RELEASE = $(CXXFLAGS_BASE) -O3 -march=native -DNDEBUG
 
 TARGET = main
-SRC = main.cpp
+SRC = main.cpp token.cpp lexer.cpp
 
 all: debug
 

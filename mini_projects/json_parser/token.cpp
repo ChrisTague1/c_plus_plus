@@ -1,0 +1,37 @@
+#include "token.h"
+#include <iostream>
+
+std::ostream& operator<<(std::ostream& os, TokenTypes type) {
+    switch (type) {
+        case TokenTypes::OpenObject: return os << "OpenObject";
+        case TokenTypes::CloseObject: return os << "CloseObject";
+        case TokenTypes::OpenArray: return os << "OpenArray";
+        case TokenTypes::CloseArray: return os << "CloseArray";
+        case TokenTypes::Comma: return os << "Comma";
+        case TokenTypes::Colon: return os << "Colon";
+        case TokenTypes::Null: return os << "Null";
+        case TokenTypes::True: return os << "True";
+        case TokenTypes::False: return os << "False";
+        case TokenTypes::String: return os << "String";
+        case TokenTypes::Number: return os << "Number";
+        case TokenTypes::Illegal: return os << "Illegal";
+    }
+    return os;
+}
+
+Token::Token(TokenTypes type_): type(type_) {}
+Token::Token(TokenTypes type_, std::string data): type(type_), s_data(std::move(data)) {
+    // take a closer look at exactly what happens with the memory here
+}
+Token::Token(TokenTypes type_, float data): type(type_), n_data(data) {}
+
+std::ostream& operator<<(std::ostream& os, const Token& token) {
+    switch (token.type) {
+        case TokenTypes::String: return os << token.type << "(" << token.s_data << ")";
+        case TokenTypes::Number: return os << token.type << "(" << token.n_data << ")";
+        default:
+            break;
+    }
+
+    return os << token.type;
+}
