@@ -17,6 +17,7 @@ enum class TokenTypes {
     False,
     String,
     Number,
+    Illegal,
 };
 
 std::ostream& operator<<(std::ostream& os, TokenTypes type) {
@@ -32,6 +33,7 @@ std::ostream& operator<<(std::ostream& os, TokenTypes type) {
         case TokenTypes::False: return os << "False";
         case TokenTypes::String: return os << "String";
         case TokenTypes::Number: return os << "Number";
+        case TokenTypes::Illegal: return os << "Illegal";
     }
     return os;
 }
@@ -40,15 +42,22 @@ class Token {
     public:
         TokenTypes type;
         std::string s_data; // use a variant here instead
+        float n_data;
 
         Token(TokenTypes type_): type(type_) {} // if I put explicit here some shit breaks. The fact that this works is cursed
         explicit Token(TokenTypes type_, std::string data): type(type_), s_data(std::move(data)) {
             // take a closer look at what exactly is happening with the memory around data, check the caller too
         }
+        explicit Token(TokenTypes type_, float data): type(type_), n_data(data) {
+
+        }
 
         friend std::ostream& operator<<(std::ostream& os, const Token& token) {
             switch (token.type) {
                 case TokenTypes::String: return os << token.type << "(" << token.s_data << ")";
+                case TokenTypes::Number: return os << token.type << "(" << token.n_data << ")";
+                default:
+                    break;
             }
 
             return os << token.type;
@@ -93,9 +102,37 @@ std::vector<Token> lexer(std::istream& in) {
 
     char c;
     while (in.get(c)) {
-        // std::cout << c << ", state is " << state << "\n";
-
         switch (state) {
+            case LexerState::InEscape:
+                switch (c) {
+                    case 'n':
+                        ss << '\n';
+                        break;
+                    case 't':
+                        ss << '\t';
+                        break;
+                }
+                break;
+            case LexerState::InNumber: {
+                // this makes it feel like the while get should be inside of the states
+                ss << c;
+                int peeked = in.peek();
+                if ( // if the next character is a . or between 0-9
+                    peeked == static_cast<int>('.') ||
+                    (
+                        peeked >= static_cast<int>('0') &&
+                        peeked <= static_cast<int>('9')
+                    )
+                ) {
+                    state = LexerState::InNumber;
+                } else {
+                    float data = stof(ss.str());
+                    ss = std::stringstream{};
+                    tokens.push_back(Token(TokenTypes::Number, data));
+                    state = LexerState::Default;
+                }
+                break;
+            }
             case LexerState::InString:
                 switch (c) {
                     case '\\':
@@ -106,8 +143,9 @@ std::vector<Token> lexer(std::istream& in) {
                         tokens.push_back(Token(TokenTypes::String, ss.str()));
                         ss = std::stringstream{};
                         break;
+                    default:
+                        ss << c;
                 }
-                ss << c;
                 break;
             case LexerState::Default:
                 switch (c) {
@@ -154,6 +192,36 @@ std::vector<Token> lexer(std::istream& in) {
                     case '"':
                         state = LexerState::InString;
                         break;
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9': {
+                        ss << c;
+
+                        int peeked = in.peek();
+
+                        if ( // if the next character is a . or between 0-9
+                            peeked == static_cast<int>('.') ||
+                            (
+                                peeked >= static_cast<int>('0') &&
+                                peeked <= static_cast<int>('9')
+                            )
+                        ) {
+                            state = LexerState::InNumber;
+                        } else {
+                            float data = stof(ss.str());
+                            ss = std::stringstream{};
+                            tokens.push_back(Token(TokenTypes::Number, data));
+                        }
+
+                        break;
+                    }
                 }
                 break;
             case LexerState::InKeyword:
@@ -201,23 +269,23 @@ std::vector<Token> lexer(std::istream& in) {
 }
 
 int main(int argc, char* argv[]) {
-    // std::cout << static_cast<int>('2') << std::endl;
     std::vector<Token> tokens;
 
-    // std::ifstream file(argv[1]);
+    std::ifstream file(argv[1]);
 
-    // tokens = lexer(file);
-
-    // for (const auto& token : tokens) {
-    //     std::cout << token << "\n";
-    // }
-
-    std::istringstream stream("{\"hey\"}");
-    tokens = lexer(stream);
+    tokens = lexer(file);
 
     for (const auto& token : tokens) {
         std::cout << token << "\n";
     }
+
+    // std::istringstream stream("{\"hey\"}");
+    // std::istringstream stream("4.67, \"hey\"");
+    // tokens = lexer(stream);
+
+    // for (const auto& token : tokens) {
+    //     std::cout << token << "\n";
+    // }
 
     return 0;
 }
