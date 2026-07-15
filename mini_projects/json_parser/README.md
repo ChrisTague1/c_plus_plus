@@ -1,1 +1,6 @@
-- `clang++ -std=c++20 mini_projects/json_parser/main.cpp && ./a.out mini_projects/json_parser/sample.json`
+- There needs to be lookahead on the keywords so `trueah` isn't valid
+- Add lots of test cases
+- Error handling when shit goes wrong
+- Benchmark tf out of it
+- Make the sdk good
+- try and make a lazy version
