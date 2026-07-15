@@ -1,5 +1,8 @@
 parser file="sample.json":
-    @clang++ -std=c++20 mini_projects/json_parser/main.cpp && ./a.out mini_projects/json_parser/{{file}}
+    @cd mini_projects/json_parser && clang++ -std=c++20 main.cpp && ./a.out {{file}}
+
+debug:
+    @cd mini_projects/json_parser && make run-debug
 
 files:
     @clang++ -std=c++20 experiments/files/files.cpp && ./a.out
