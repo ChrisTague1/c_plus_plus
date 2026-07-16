@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ostream>
+#include <variant>
 
 enum class TokenTypes {
     OpenObject,   // {
@@ -22,8 +23,7 @@ std::ostream& operator<<(std::ostream& os, TokenTypes type);
 class Token {
    public:
     TokenTypes type;
-    std::string s_data;  // use a variant here instead
-    float n_data;
+    std::variant<std::monostate, std::string, float> data;
 
     Token(TokenTypes type_);  // if you put explicit here things break
     explicit Token(TokenTypes type_, std::string data);

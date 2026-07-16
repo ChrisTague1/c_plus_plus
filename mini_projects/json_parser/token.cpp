@@ -20,15 +20,15 @@ std::ostream& operator<<(std::ostream& os, TokenTypes type) {
 }
 
 Token::Token(TokenTypes type_): type(type_) {}
-Token::Token(TokenTypes type_, std::string data): type(type_), s_data(std::move(data)) {
+Token::Token(TokenTypes type_, std::string data): type(type_), data(std::move(data)) {
     // take a closer look at exactly what happens with the memory here
 }
-Token::Token(TokenTypes type_, float data): type(type_), n_data(data) {}
+Token::Token(TokenTypes type_, float data): type(type_), data(data) {}
 
 std::ostream& operator<<(std::ostream& os, const Token& token) {
     switch (token.type) {
-        case TokenTypes::String: return os << token.type << "(" << token.s_data << ")";
-        case TokenTypes::Number: return os << token.type << "(" << token.n_data << ")";
+        case TokenTypes::String: return os << token.type << "(" << std::get<std::string>(token.data) << ")";
+        case TokenTypes::Number: return os << token.type << "(" << std::get<float>(token.data) << ")";
         default:
             break;
     }

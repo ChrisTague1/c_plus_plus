@@ -1,8 +1,14 @@
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
+#include <vector>
 
 #include "token.h"
 #include "lexer.h"
+
+using JsonArray = std::vector<JsonValue>;
+using JsonObject = std::unordered_map<std::string, JsonValue>;
+using JsonValue = std::variant<float, bool, std::string, JsonArray, JsonObject>;
 
 enum class ParserState {
     ExpectingString, // for when inside of an object
@@ -25,7 +31,7 @@ bool parser(const std::vector<Token>& tokens) {
 
         switch (state) {
             case ParserState::ExpectingValue:
-                
+
 
                 break;
         }
