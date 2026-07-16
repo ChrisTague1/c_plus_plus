@@ -5,18 +5,27 @@
 #include "lexer.h"
 
 enum class ParserState {
-    ExpectingObject,    
+    ExpectingString, // for when inside of an object
+    ExpectingColon, // after object key string
+    ExpectingValue, // here I can get:
+                    // - string
+                    // - number
+                    // - true
+                    // - false
+                    // - null
+                    // - OpenObject
+                    // - OpenArray
 };
 
 bool parser(const std::vector<Token>& tokens) {
-    ParserState state = ParserState::ExpectingObject;
+    ParserState state = ParserState::ExpectingValue;
 
     for (const auto& token : tokens) {
         std::cout << token << "\n";
 
         switch (state) {
-            case ParserState::ExpectingObject:
-                // I can have either { or [ here
+            case ParserState::ExpectingValue:
+                
 
                 break;
         }
