@@ -46,3 +46,14 @@ const Token& TokenStream::next() {
 bool TokenStream::has_next() const {
     return pos_ < tokens_.size();
 }
+
+std::ostream& operator<<(std::ostream& os, const TokenStream& ts) {
+    bool first = true;
+    for (const auto& token : ts.tokens_) {
+        if (!first) os << ", ";
+        first = false;
+        os << token;
+    }
+
+    return os;
+}

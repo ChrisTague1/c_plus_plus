@@ -1,6 +1,7 @@
 #include "lexer.h"
 
 #include <sstream>
+#include <format>
 
 std::ostream& operator<<(std::ostream& os, LexerState state) {
     switch (state) {
@@ -12,6 +13,7 @@ std::ostream& operator<<(std::ostream& os, LexerState state) {
     }
     return os;
 }
+
 
 TokenStream lexer(std::istream& in) {
     std::vector<Token> tokens;
@@ -35,6 +37,14 @@ TokenStream lexer(std::istream& in) {
                     case 't':
                         ss << '\t';
                         break;
+                    case '\\':
+                        ss << '\\';
+                        break;
+                    case '"':
+                        ss << '"';
+                        break;
+                    default:
+                        throw LexerIllegalCharacter(std::format("Illegal escape character: {}", c));
                 }
                 break;
             case LexerState::InNumber: {
@@ -146,9 +156,11 @@ TokenStream lexer(std::istream& in) {
 
                         break;
                     }
+                    default:
+                        throw LexerIllegalCharacter(std::format("Found an illegal character: '{}'", c));
                 }
                 break;
-            case LexerState::InKeyword:
+            case LexerState::InKeyword: {
                 std::string comparing;
                 TokenTypes token_type;
 
@@ -168,26 +180,29 @@ TokenStream lexer(std::istream& in) {
                 }
 
                 if (c != comparing[keyword_index]) {
-                    // throw an error
                     state = LexerState::Default;
                     break;
                 }
 
                 if (++keyword_index == comparing.size()) {
-                    // This only works because there is no overlap,
-                    // if no and noop were two different keywords we'd need to
-                    // look ahead
                     tokens.push_back(token_type);
-                    // TODO we technically need to look ahead for this, trueahhh
-                    // isn't valid
                     state = LexerState::Default;
                 }
 
                 break;
+            }
         }
     }
 
-    std::cout << "\n";
-
     return TokenStream(tokens);
+}
+
+LexerIllegalCharacter::LexerIllegalCharacter(
+    std::string msg, std::source_location loc)
+    : message(std::move(msg)), location(loc) {}
+[[nodiscard]] const char* LexerIllegalCharacter::what() const noexcept {
+    return message.c_str();
+}
+const std::source_location& LexerIllegalCharacter::where() const noexcept {
+    return location;
 }

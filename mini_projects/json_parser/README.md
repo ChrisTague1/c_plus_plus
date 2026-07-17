@@ -7,13 +7,9 @@
 
 # Notes for self
 
-We are essentially building a JsonValue object which is a union of:
-
-- number
-- null
-- boolean
-- string
-- object
-- array
-
-For the root of a document the only allowed values are object and array
+- lexer should keep track of position of each character in the file for errors
+- lexer should load things into a buffer instead of literally going character by character
+- lexer should throw errors when you do something wack
+- parser should throw errors when you do something wack
+- make an sdk for access
+- benchmark tf out of this and optimize
