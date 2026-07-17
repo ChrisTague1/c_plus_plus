@@ -4,7 +4,7 @@ CXXFLAGS_DEBUG = $(CXXFLAGS_BASE) -g -O0 -fsanitize=undefined
 CXXFLAGS_RELEASE = $(CXXFLAGS_BASE) -O3 -march=native -DNDEBUG
 
 TARGET = main
-SRC = main.cpp token.cpp lexer.cpp
+SRC = main.cpp token.cpp lexer.cpp json.cpp parser.cpp
 
 all: debug
 
