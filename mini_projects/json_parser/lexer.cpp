@@ -13,14 +13,14 @@ std::ostream& operator<<(std::ostream& os, LexerState state) {
     return os;
 }
 
-std::vector<Token> lexer(std::istream& in) {
+TokenStream lexer(std::istream& in) {
     std::vector<Token> tokens;
     LexerState state = LexerState::Default;
 
     const std::string true_keyword = "true";
     const std::string false_keyword = "false";
     const std::string null_keyword = "null";
-    char keyword_index = 0;
+    size_t keyword_index = 0;
     Keyword keyword;
     std::stringstream ss;
 
@@ -189,5 +189,5 @@ std::vector<Token> lexer(std::istream& in) {
 
     std::cout << "\n";
 
-    return tokens;
+    return TokenStream(tokens);
 }

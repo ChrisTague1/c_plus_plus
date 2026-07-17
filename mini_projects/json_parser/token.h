@@ -31,3 +31,14 @@ class Token {
 
     friend std::ostream& operator<<(std::ostream& os, const Token& token);
 };
+
+class TokenStream {
+    std::vector<Token> tokens_;
+    std::size_t pos_ = 0;
+
+    public:
+        explicit TokenStream(std::vector<Token> tokens);
+        const Token& peek() const;
+        const Token& next();
+        bool has_next() const;
+};

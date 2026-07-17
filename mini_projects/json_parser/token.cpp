@@ -35,3 +35,14 @@ std::ostream& operator<<(std::ostream& os, const Token& token) {
 
     return os << token.type;
 }
+
+TokenStream::TokenStream(std::vector<Token> tokens): tokens_(std::move(tokens)) {}
+const Token& TokenStream::peek() const {
+    return tokens_[pos_];
+}
+const Token& TokenStream::next() {
+    return tokens_[pos_++];
+}
+bool TokenStream::has_next() const {
+    return pos_ < tokens_.size();
+}

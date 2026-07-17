@@ -21,4 +21,4 @@ enum class Keyword {
     Null,
 };
 
-std::vector<Token> lexer(std::istream& in);
+TokenStream lexer(std::istream& in);
