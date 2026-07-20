@@ -1,5 +1,7 @@
 #include "parser.h"
 
+#include <format>
+
 std::ostream& operator<<(std::ostream& os, ParserState state) {
     switch (state) {
         case ParserState::ExpectingColon: return os << "ExpectingColon";
@@ -20,7 +22,6 @@ JsonValue parser(TokenStream& tokens) {
 
     while (tokens.has_next()) {
         Token token = tokens.next();
-        // std::cout << token << ", State: " << state << std::endl;
 
         switch (state) {
             case ParserState::ExpectingCommaOrArrayClose:
@@ -38,6 +39,7 @@ JsonValue parser(TokenStream& tokens) {
                         state = ParserState::ExpectingString;
                         break;
                 }
+                break;
             case ParserState::ExpectingColon:
                 switch (token.type) {
                     case TokenTypes::Colon:
@@ -45,12 +47,15 @@ JsonValue parser(TokenStream& tokens) {
                         map->values[temp_key] = parser(tokens); // is this copying it, I ideally want it passed by reference
                         break;
                 }
+                break;
             case ParserState::ExpectingString:
                 switch (token.type) {
                     case TokenTypes::String:
                         temp_key = std::get<std::string>(token.data);
                         state = ParserState::ExpectingColon;
                         break;
+                    default:
+                        throw ParserIllegalToken(std::format("Expected a string for an object key, found {}", token.type));
                 }
                 break;
             case ParserState::ExpectingValue:
@@ -67,10 +72,22 @@ JsonValue parser(TokenStream& tokens) {
                         state = ParserState::ExpectingCommaOrArrayClose;
                         array->values.push_back(parser(tokens));
                         break;
+                    default:
+                        throw ParserIllegalToken(std::format("Expected a JSON value or start of object or array, found {}", token.type));
                 }
                 break;
         }
     }
 
-    return true;
+    throw ParserIllegalToken("Failed to build a valid JSON value");
+}
+
+ParserIllegalToken::ParserIllegalToken(std::string msg,
+                                       std::source_location loc)
+    : message(msg), location(loc) {}
+[[nodiscard]] const char* ParserIllegalToken::what() const noexcept {
+    return message.c_str();
+}
+const std::source_location& ParserIllegalToken::where() const noexcept {
+    return location;
 }

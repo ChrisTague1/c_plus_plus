@@ -10,6 +10,7 @@ std::ostream& operator<<(std::ostream& os, LexerState state) {
         case LexerState::InEscape: return os << "InEscape";
         case LexerState::InNumber: return os << "InNumber";
         case LexerState::InKeyword: return os << "InKeyword";
+        case LexerState::InNumberAfterPeriod: return os << "InNumberAfterPeriod";
     }
     return os;
 }
@@ -33,33 +34,42 @@ TokenStream lexer(std::istream& in) {
                 switch (c) {
                     case 'n':
                         ss << '\n';
+                        state = LexerState::InString;
                         break;
                     case 't':
                         ss << '\t';
+                        state = LexerState::InString;
                         break;
                     case '\\':
                         ss << '\\';
+                        state = LexerState::InString;
                         break;
                     case '"':
                         ss << '"';
+                        state = LexerState::InString;
                         break;
                     default:
                         throw LexerIllegalCharacter(std::format("Illegal escape character: {}", c));
                 }
                 break;
-            case LexerState::InNumber: {
-                // this makes it feel like the while get should be inside of the states
+            case LexerState::InNumberAfterPeriod: {
                 ss << c;
                 int peeked = in.peek();
-                if ( // if the next character is a . or between 0-9
-                    peeked == static_cast<int>('.') ||
-                    (
-                        peeked >= static_cast<int>('0') &&
-                        peeked <= static_cast<int>('9')
-                    )
-                ) {
-                    state = LexerState::InNumber;
-                } else {
+                if (peeked < static_cast<int>('0') || peeked > static_cast<int>('9')) {
+                    float data = stof(ss.str());
+                    ss = std::stringstream{};
+                    tokens.push_back(Token(TokenTypes::Number, data));
+                    state = LexerState::Default;
+                }
+                break;
+            }
+            case LexerState::InNumber: {
+                ss << c;
+                int peeked = in.peek();
+                if (peeked == static_cast<int>('.')) {
+                    state = LexerState::InNumberAfterPeriod;
+                } else if (peeked < static_cast<int>('0') ||
+                           peeked > static_cast<int>('9')) {
                     float data = stof(ss.str());
                     ss = std::stringstream{};
                     tokens.push_back(Token(TokenTypes::Number, data));
@@ -137,23 +147,16 @@ TokenStream lexer(std::istream& in) {
                     case '8':
                     case '9': {
                         ss << c;
-
                         int peeked = in.peek();
-
-                        if ( // if the next character is a . or between 0-9
-                            peeked == static_cast<int>('.') ||
-                            (
-                                peeked >= static_cast<int>('0') &&
-                                peeked <= static_cast<int>('9')
-                            )
-                        ) {
-                            state = LexerState::InNumber;
-                        } else {
+                        if (peeked == static_cast<int>('.')) {
+                            state = LexerState::InNumberAfterPeriod;
+                        } else if (peeked < static_cast<int>('0') ||
+                                   peeked > static_cast<int>('9')) {
                             float data = stof(ss.str());
                             ss = std::stringstream{};
                             tokens.push_back(Token(TokenTypes::Number, data));
+                            state = LexerState::Default;
                         }
-
                         break;
                     }
                     default:
@@ -197,8 +200,8 @@ TokenStream lexer(std::istream& in) {
     return TokenStream(tokens);
 }
 
-LexerIllegalCharacter::LexerIllegalCharacter(
-    std::string msg, std::source_location loc)
+LexerIllegalCharacter::LexerIllegalCharacter(std::string msg,
+                                             std::source_location loc)
     : message(std::move(msg)), location(loc) {}
 [[nodiscard]] const char* LexerIllegalCharacter::what() const noexcept {
     return message.c_str();

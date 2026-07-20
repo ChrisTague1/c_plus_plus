@@ -1,6 +1,8 @@
 #pragma once
 
+#include <format>
 #include <ostream>
+#include <sstream>
 #include <variant>
 
 enum class TokenTypes {
@@ -19,6 +21,15 @@ enum class TokenTypes {
 };
 
 std::ostream& operator<<(std::ostream& os, TokenTypes type);
+
+template <>
+struct std::formatter<TokenTypes> : std::formatter<std::string> {
+    auto format(TokenTypes type, std::format_context& ctx) const {
+        std::ostringstream ss;
+        ss << type;
+        return std::formatter<std::string>::format(ss.str(), ctx);
+    }
+};
 
 class Token {
    public:

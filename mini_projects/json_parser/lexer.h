@@ -12,6 +12,7 @@ enum class LexerState {
     InString,
     InEscape,
     InNumber,
+    InNumberAfterPeriod,
     InKeyword,
 };
 
@@ -30,9 +31,8 @@ class LexerIllegalCharacter : public std::exception {
     std::source_location location;
 
    public:
-    LexerIllegalCharacter(
-        std::string msg,
-        std::source_location loc = std::source_location::current());
+    LexerIllegalCharacter(std::string msg, std::source_location loc =
+                                               std::source_location::current());
     [[nodiscard]] const char* what() const noexcept override;
     const std::source_location& where() const noexcept;
 };
