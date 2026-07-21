@@ -86,12 +86,23 @@ JsonValue parser(TokenStream& tokens) {
                     case TokenTypes::OpenObject:
                         state = ParserState::ExpectingStringOrCloseObject;
                         break;
-                    case TokenTypes::OpenArray:
+                    case TokenTypes::OpenArray: {
+                        const Token& token = tokens.peek();
+
+                        if (token.type == TokenTypes::CloseArray) {
+                            tokens.next();
+                            return array;
+                        };
+
                         state = ParserState::ExpectingCommaOrArrayClose;
                         array->values.push_back(parser(tokens));
                         break;
+                    }
                     default:
-                        throw ParserIllegalToken(std::format("Expected a JSON value or start of object or array, found {}", token.type));
+                        throw ParserIllegalToken(std::format(
+                            "Expected a JSON value or start of object or "
+                            "array, found {} at line {} position {}",
+                            token.type, token.line, token.position));
                 }
                 break;
         }

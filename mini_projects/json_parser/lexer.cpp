@@ -27,8 +27,18 @@ TokenStream lexer(std::istream& in) {
     Keyword keyword;
     std::stringstream ss;
 
+    int line = 1;
+    int position = 0;
+
     char c;
     while (in.get(c)) {
+        if (c == '\n') {
+            line++;
+            position = 0;
+        } else {
+            position++;
+        }
+
         switch (state) {
             case LexerState::InEscape:
                 switch (c) {
@@ -58,7 +68,7 @@ TokenStream lexer(std::istream& in) {
                 if (peeked < static_cast<int>('0') || peeked > static_cast<int>('9')) {
                     float data = stof(ss.str());
                     ss = std::stringstream{};
-                    tokens.push_back(Token(TokenTypes::Number, data));
+                    tokens.push_back(Token(TokenTypes::Number, line, position, data));
                     state = LexerState::Default;
                 }
                 break;
@@ -72,7 +82,7 @@ TokenStream lexer(std::istream& in) {
                            peeked > static_cast<int>('9')) {
                     float data = stof(ss.str());
                     ss = std::stringstream{};
-                    tokens.push_back(Token(TokenTypes::Number, data));
+                    tokens.push_back(Token(TokenTypes::Number, line, position, data));
                     state = LexerState::Default;
                 }
                 break;
@@ -84,7 +94,7 @@ TokenStream lexer(std::istream& in) {
                         break;
                     case '"':
                         state = LexerState::Default;
-                        tokens.push_back(Token(TokenTypes::String, ss.str()));
+                        tokens.push_back(Token(TokenTypes::String, line, position, ss.str()));
                         ss = std::stringstream{};
                         break;
                     default:
@@ -101,22 +111,22 @@ TokenStream lexer(std::istream& in) {
                     case ' ':
                         break;
                     case '{':
-                        tokens.push_back(TokenTypes::OpenObject);
+                        tokens.push_back(Token(TokenTypes::OpenObject, line, position));
                         break;
                     case '}':
-                        tokens.push_back(TokenTypes::CloseObject);
+                        tokens.push_back(Token(TokenTypes::CloseObject, line, position));
                         break;
                     case '[':
-                        tokens.push_back(TokenTypes::OpenArray);
+                        tokens.push_back(Token(TokenTypes::OpenArray, line, position));
                         break;
                     case ']':
-                        tokens.push_back(TokenTypes::CloseArray);
+                        tokens.push_back(Token(TokenTypes::CloseArray, line, position));
                         break;
                     case ',':
-                        tokens.push_back(TokenTypes::Comma);
+                        tokens.push_back(Token(TokenTypes::Comma, line, position));
                         break;
                     case ':':
-                        tokens.push_back(TokenTypes::Colon);
+                        tokens.push_back(Token(TokenTypes::Colon, line, position));
                         break;
                     case 't':
                         keyword = Keyword::True;
@@ -136,6 +146,19 @@ TokenStream lexer(std::istream& in) {
                     case '"':
                         state = LexerState::InString;
                         break;
+                    case '-': {
+                        int peeked = in.peek();
+
+                        if (peeked < static_cast<int>('0') || peeked > static_cast<int>('9')) {
+                            throw LexerIllegalCharacter(std::format("Illegal character: - must be followed by a number to be made negative."));
+                        }
+
+                        ss << c;
+
+                        state = LexerState::InNumber;
+
+                        break;
+                    }
                     case '0':
                     case '1':
                     case '2':
@@ -147,20 +170,26 @@ TokenStream lexer(std::istream& in) {
                     case '8':
                     case '9': {
                         ss << c;
+
                         int peeked = in.peek();
-                        if (peeked == static_cast<int>('.')) {
-                            state = LexerState::InNumberAfterPeriod;
-                        } else if (peeked < static_cast<int>('0') ||
-                                   peeked > static_cast<int>('9')) {
+
+                        if (
+                            peeked != static_cast<int>('.') && (
+                                peeked < static_cast<int>('0') ||
+                                peeked > static_cast<int>('9')
+                            )
+                        ) {
                             float data = stof(ss.str());
                             ss = std::stringstream{};
-                            tokens.push_back(Token(TokenTypes::Number, data));
-                            state = LexerState::Default;
+                            tokens.push_back(Token(TokenTypes::Number, line, position, data));
+                        } else {
+                            state = LexerState::InNumber;
                         }
+
                         break;
                     }
                     default:
-                        throw LexerIllegalCharacter(std::format("Found an illegal character: '{}'", c));
+                        throw LexerIllegalCharacter(std::format("Found an illegal character: '{}' at line {} position {}", c, line, position));
                 }
                 break;
             case LexerState::InKeyword: {
@@ -188,7 +217,7 @@ TokenStream lexer(std::istream& in) {
                 }
 
                 if (++keyword_index == comparing.size()) {
-                    tokens.push_back(token_type);
+                    tokens.push_back(Token(token_type, line, position));
                     state = LexerState::Default;
                 }
 

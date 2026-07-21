@@ -33,12 +33,14 @@ struct std::formatter<TokenTypes> : std::formatter<std::string> {
 
 class Token {
    public:
-    TokenTypes type;
     std::variant<std::monostate, std::string, float> data;
+    TokenTypes type;
+    int line;
+    int position;
 
-    Token(TokenTypes type_);  // if you put explicit here things break
-    explicit Token(TokenTypes type_, std::string data);
-    explicit Token(TokenTypes type_, float data);
+    explicit Token(TokenTypes type_, int line_, int position_);
+    explicit Token(TokenTypes type_, int line_, int position_, std::string data);
+    explicit Token(TokenTypes type_, int line_, int position_, float data);
 
     friend std::ostream& operator<<(std::ostream& os, const Token& token);
 };

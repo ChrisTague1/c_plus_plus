@@ -23,8 +23,10 @@ int main(int, char* argv[]) {
         JsonValue value = parser(tokens);
         Json json = Json(value);
 
-        std::string key = "hey";
-        std::cout << json[key] << std::endl;
+        // std::string key = "hey";
+        // std::cout << json[key] << std::endl;
+
+        std::cout << json << "\n";
     }
     catch (const LexerIllegalCharacter& e) {
         std::cerr << "Illegal character: " << e.what() << "\n";

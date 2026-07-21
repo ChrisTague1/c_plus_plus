@@ -19,11 +19,14 @@ std::ostream& operator<<(std::ostream& os, TokenTypes type) {
     return os;
 }
 
-Token::Token(TokenTypes type_): type(type_) {}
-Token::Token(TokenTypes type_, std::string data): type(type_), data(std::move(data)) {
+Token::Token(TokenTypes type_, int line_, int position_)
+    : data(), type(type_), line(line_), position(position_) {}
+Token::Token(TokenTypes type_, int line_, int position_, std::string data)
+    : data(std::move(data)), type(type_), line(line_), position(position_) {
     // take a closer look at exactly what happens with the memory here
 }
-Token::Token(TokenTypes type_, float data): type(type_), data(data) {}
+Token::Token(TokenTypes type_, int line_, int position_, float data)
+    : data(data), type(type_), line(line_), position(position_) {}
 
 std::ostream& operator<<(std::ostream& os, const Token& token) {
     switch (token.type) {
