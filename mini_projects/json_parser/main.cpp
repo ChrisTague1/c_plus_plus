@@ -21,8 +21,10 @@ int main(int, char* argv[]) {
         TokenStream tokens = lexer(file);
 
         JsonValue value = parser(tokens);
+        Json json = Json(value);
 
-        std::cout << value << std::endl;
+        std::string key = "hey";
+        std::cout << json[key] << std::endl;
     }
     catch (const LexerIllegalCharacter& e) {
         std::cerr << "Illegal character: " << e.what() << "\n";

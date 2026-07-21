@@ -1,5 +1,8 @@
 #include "json.h"
 
+#include <iostream>
+#include <exception>
+
 std::ostream& operator<<(std::ostream& os, const JsonArray& array) {
     os << "[";
 
@@ -57,4 +60,64 @@ std::ostream& operator<<(std::ostream& os, const JsonValue& value) {
 
     std::visit(JsonValuePrinter{os}, value);
     return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const Json& json) {
+    return os << json.value;
+}
+
+Json::Json(JsonValue& val): value(val) {
+
+}
+
+Json Json::operator[](std::string& key) const {
+    if (auto obj_ptr = std::get_if<std::unique_ptr<JsonObject>>(&value)) {
+        auto obj = obj_ptr->get();
+        
+        auto it = obj->values.find(key);
+
+        if (it != obj->values.end()) {
+            return Json(it->second);
+        } else {
+            throw std::out_of_range("key not found: " + key);
+        }
+    } else {
+        throw std::runtime_error("json is not an object");
+    }
+}
+
+Json Json::operator[](int index) const {
+    if (auto arr_ptr = std::get_if<std::unique_ptr<JsonArray>>(&value)) {
+        auto arr = arr_ptr->get();
+        auto& val = arr->values.at(index);
+
+        return Json(val);
+    }
+
+    throw std::runtime_error("json is not an array");
+}
+
+Json::operator bool() const {
+    struct JsonBoolEval {
+        bool operator()(float f) const {
+            return f != 0;
+        }
+        bool operator()(bool b) const {
+            return b;
+        }
+        bool operator()(std::nullptr_t) const {
+            return false;
+        }
+        bool operator()(const std::string& s) const {
+            return !s.empty();
+        }
+        bool operator()(const std::unique_ptr<JsonArray>& ar) const {
+            return !ar->values.empty();
+        }
+        bool operator()(const std::unique_ptr<JsonObject>& obj) const {
+            return !obj->values.empty();
+        }
+    };
+    
+    return std::visit(JsonBoolEval{}, value);
 }

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -30,3 +31,16 @@ struct JsonObject {
 std::ostream& operator<<(std::ostream& os, const JsonValue& value);
 std::ostream& operator<<(std::ostream& os, const JsonArray& array);
 std::ostream& operator<<(std::ostream& os, const JsonObject& object);
+
+class Json {
+    JsonValue& value;
+
+    friend std::ostream& operator<<(std::ostream& os, const Json& json);
+
+   public:
+    explicit Json(JsonValue& val);
+    Json operator[](std::string& key) const;
+    Json operator[](int index) const;
+
+    explicit operator bool() const;
+};

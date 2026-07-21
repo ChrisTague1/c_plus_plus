@@ -9,6 +9,7 @@ std::ostream& operator<<(std::ostream& os, ParserState state) {
         case ParserState::ExpectingValue: return os << "ExpectingValue";
         case ParserState::ExpectingCommaOrObjectClose: return os << "ExpectingCommaOrObjectClose";
         case ParserState::ExpectingCommaOrArrayClose: return os << "ExpectingCommaOrArrayClose";
+        case ParserState::ExpectingStringOrCloseObject: return os << "ExpectingStringOrCloseObject";
     }
     return os;
 }
@@ -24,12 +25,25 @@ JsonValue parser(TokenStream& tokens) {
         Token token = tokens.next();
 
         switch (state) {
+            case ParserState::ExpectingStringOrCloseObject:
+                switch (token.type) {
+                    case TokenTypes::String: 
+                        temp_key = std::get<std::string>(token.data);
+                        state = ParserState::ExpectingColon;
+                        break;
+                    case TokenTypes::CloseObject: return map;
+                    default:
+                        throw ParserIllegalToken(std::format("Expected a string or object close, found {}", token.type));
+                }
+                break;
             case ParserState::ExpectingCommaOrArrayClose:
                 switch (token.type) {
                     case TokenTypes::CloseArray: return array;
                     case TokenTypes::Comma:
                         array->values.push_back(parser(tokens));
                         break;
+                    default:
+                        throw ParserIllegalToken(std::format("Expected a comma or closed array, found {}", token.type));
                 }
                 break;
             case ParserState::ExpectingCommaOrObjectClose:
@@ -38,6 +52,8 @@ JsonValue parser(TokenStream& tokens) {
                     case TokenTypes::Comma:
                         state = ParserState::ExpectingString;
                         break;
+                    default:
+                        throw ParserIllegalToken(std::format("Expected a comma or closed object, found {}", token.type));
                 }
                 break;
             case ParserState::ExpectingColon:
@@ -46,6 +62,8 @@ JsonValue parser(TokenStream& tokens) {
                         state = ParserState::ExpectingCommaOrObjectClose;
                         map->values[temp_key] = parser(tokens); // is this copying it, I ideally want it passed by reference
                         break;
+                    default:
+                        throw ParserIllegalToken(std::format("Expected a colon, found {}", token.type));
                 }
                 break;
             case ParserState::ExpectingString:
@@ -66,7 +84,7 @@ JsonValue parser(TokenStream& tokens) {
                     case TokenTypes::True: return true;
                     case TokenTypes::False: return false;
                     case TokenTypes::OpenObject:
-                        state = ParserState::ExpectingString;
+                        state = ParserState::ExpectingStringOrCloseObject;
                         break;
                     case TokenTypes::OpenArray:
                         state = ParserState::ExpectingCommaOrArrayClose;
