@@ -25,7 +25,6 @@ enum class Keyword {
 };
 
 TokenStream lexer(std::istream& in);
-TokenStream lexer2(std::istream& in);
 
 class LexerIllegalCharacter : public std::exception {
     std::string message;
