@@ -5,6 +5,9 @@ CXXFLAGS_RELEASE = $(CXXFLAGS_BASE) -O3 -march=native -DNDEBUG
 
 TARGET = main
 SRC = main.cpp token.cpp lexer.cpp json.cpp parser.cpp
+LIB_SRC = token.cpp lexer.cpp json.cpp parser.cpp
+TEST_TARGET = parser_tests
+TEST_SRC = tests/parser_tests.cpp $(LIB_SRC)
 
 all: debug
 
@@ -20,7 +23,11 @@ release: $(SRC)
 run-release: release
 	@./$(TARGET)
 
-clean:
-	@rm -f $(TARGET)
+test: $(TEST_SRC)
+	@$(CXX) $(CXXFLAGS_DEBUG) -I. -o $(TEST_TARGET) $(TEST_SRC)
+	@./$(TEST_TARGET)
 
-.PHONY: all debug release run-release clean
+clean:
+	@rm -f $(TARGET) $(TEST_TARGET)
+
+.PHONY: all debug release run-debug run-release test clean

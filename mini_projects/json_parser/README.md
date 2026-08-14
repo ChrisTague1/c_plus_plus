@@ -5,26 +5,82 @@ starting in HFT. The goal is not to be feature-complete but to use JSON
 parsing as a vehicle for getting comfortable with modern C++, memory layout,
 and low-latency thinking.
 
----
+## Known correctness and JSON feature gaps
 
-## Roadmap / open TODOs
+Correctness is not the main focus of this project, but these gaps matter when
+interpreting benchmarks. A faster version should not silently do less work.
 
-- There needs to be lookahead on the keywords so `trueah` isn't valid
-- Add lots of test cases
-- Error handling when shit goes wrong
-- Benchmark tf out of it
-- Make the SDK good
-- Try and make a lazy version
+- Numbers are stored as `float`; use at least `double`, and consider separate
+  `int64_t` and `double` alternatives. Prices may eventually be better modeled
+  as fixed-point integers.
+- Scientific notation is unsupported (`1e10`, `1E-3`). Number parsing also
+  fails to enforce JSON's leading-zero and fractional-digit rules, and may
+  accept inputs such as `-` or `1.`.
+- The result from `std::from_chars` is ignored. Invalid and out-of-range
+  numbers therefore do not produce a reliable parse error.
+- A complete document is not required to consume every token. Inputs such as
+  `true false` and `truex` can return a valid first value while leaving trailing
+  input behind.
+- An incomplete array such as `[` can call `TokenStream::peek()` past the end
+  of its vector.
+- Strings support only `\n`, `\t`, `\\`, and `\"`. Missing escapes include
+  `\b`, `\f`, `\r`, `\/`, and Unicode `\uXXXX` (including surrogate pairs).
+- Unescaped control characters and newlines inside strings are not rejected.
+- JSON whitespace includes carriage return (`\r`), which the lexer currently
+  rejects.
+- Error positions are not consistently the start or exact failure location of
+  a token, especially across multiline strings.
+- There is no nesting-depth limit. Recursive parsing can overflow the C++ call
+  stack on adversarial input.
+- Duplicate object keys silently use a last-value-wins policy. This should be
+  intentional and documented, even if it remains the chosen behavior.
+- Printed strings and object keys are not escaped, so serialization can emit
+  invalid JSON. Floating-point serialization also needs an explicit round-trip
+  policy.
+- `Json` is a non-owning reference wrapper, so it can dangle if the underlying
+  `JsonValue` is destroyed or moved.
+- The public API does not yet expose a structured parse result/error, input
+  ownership rules, or resource limits.
 
-## Notes for self
+## Performance-first roadmap
 
-- Lexer should keep track of position of each character in the file for errors
-- Lexer should load things into a buffer instead of literally going character
-  by character
-- Lexer should throw errors when you do something wack
-- Parser should throw errors when you do something wack
-- Make an SDK for access
-- Benchmark tf out of this and optimize
+The immediate goal is to learn measurement, allocation behavior, locality,
+and predictable latency—not to complete every item above first.
+
+1. Establish lexer-only, parser-only, end-to-end, and field-access benchmarks.
+   Track throughput, latency distribution, allocations, and bytes allocated.
+2. Replace per-character `std::istream` access with a contiguous input buffer
+   (`std::string_view`, pointer + end, or indexes). This is likely a larger win
+   than changing the parser control flow.
+3. Remove wasted parser allocations. Each call currently allocates both a
+   `JsonObject` and `JsonArray`, even for scalar values; construct only the
+   container actually encountered.
+4. Audit hidden copies. `Token token = tokens.next()` copies the token and its
+   string, and object keys are copied through `temp_key`. Measure const-reference
+   and move-based alternatives while keeping ownership safe.
+5. Measure the cost of materializing a complete `std::vector<Token>`. Compare
+   it with a fused lexer/parser or a lightweight token containing spans into
+   the source buffer.
+6. Use `try_emplace`/`emplace` for object insertion and `emplace_back` where it
+   improves construction, but expect this to be smaller than removing whole
+   allocations and copies.
+7. Compare object representations using realistic object sizes and access
+   patterns: `unordered_map`, a contiguous vector with linear search, a sorted
+   vector with binary search, and a flat hash map. Sorting during every insert
+   may cost more than it saves; building first and sorting once is a separate
+   design worth testing.
+8. Make storage contiguous with an arena (`std::pmr::monotonic_buffer_resource`)
+   or a flat/tape representation. Measure construction, lookup, traversal,
+   destruction, and total allocated bytes—not just parse time.
+9. Replace recursive parsing with an explicit stack. Treat bounded depth and
+   predictable resource use as the first benefit; do not assume it is faster
+   until measured.
+10. Build a streaming/on-demand path that extracts selected fields without
+    constructing a DOM. For exchange-style messages, avoiding unnecessary
+    representation may dominate micro-optimizing the DOM parser.
+
+Change one variable at a time and keep losing benchmark results. Benchmark
+serialization separately so `operator<<` does not hide parser improvements.
 
 ---
 
@@ -63,14 +119,11 @@ to ask yourself, roughly ordered by expected impact for an HFT-style workload.
 - `in.get(c)` is a virtual call per byte. What happens if you read the entire
   input into a `std::string` / `std::vector<char>` first and iterate with a
   raw pointer or index? Measure the difference.
-- `std::stringstream ss` for building strings and numbers — it's famously
-  slow. What is it doing under the hood that a `std::string` with
-  `push_back` / `append` + `reserve` isn't? Better still: for string tokens,
-  can you capture a `[start, end)` pointer pair into the input buffer and
-  avoid copying entirely?
-- `stof` is locale-dependent and allocates. Look at `std::from_chars` in
-  `<charconv>` — it's faster, locale-independent, and reports where it
-  stopped. Why does locale matter in HFT?
+- Strings and numbers are accumulated into temporary `std::string` objects.
+  Can tokens instead capture a `[start, end)` span into an owned input buffer
+  and avoid copying? How will escaped strings differ from unescaped strings?
+- The lexer uses `std::from_chars`, but ignores its returned pointer and error
+  code. Validate both without adding work to the successful path unnecessarily.
 - `in.peek()` + `in.get(c)` is two virtual calls per character. With a
   buffer + index, peek is essentially free. What does the disassembly look
   like before and after?
@@ -78,8 +131,9 @@ to ask yourself, roughly ordered by expected impact for an HFT-style workload.
   machine, consider matching 4 / 5 / 4 bytes at once with `std::memcmp` once
   you've buffered the input. One branch instead of N. Where does this break
   down?
-- The lexer's `InKeyword` state silently resets to `Default` on a mismatch
-  instead of throwing. What does `truex` currently parse to?
+- Keyword recognition does not verify that the following character is a valid
+  delimiter, and the top-level parser does not reject leftover tokens. What do
+  `truex`, `truefalse`, and `null0` currently do end to end?
 - The state machine is a nested `switch`. Look up **jump tables** and
   computed gotos (GCC's `&&label` extension). When do they beat a switch,
   and when does the compiler already do this for you?
@@ -120,8 +174,9 @@ to ask yourself, roughly ordered by expected impact for an HFT-style workload.
 - JSON doesn't distinguish int from float, but many HFT feeds only ever send
   integer quantities. Would a separate `int64_t` alternative in `JsonValue`
   buy you anything?
-- You don't currently handle negative numbers, exponents (`1e10`), or
-  leading-zero rules. Read RFC 8259 section 6 and make a checklist.
+- Negative numbers have a partial path, but exponents (`1e10`), mandatory
+  digits around decimal syntax, conversion errors, and leading-zero rules are
+  not handled correctly. Read RFC 8259 section 6 and make a checklist.
 
 ### 5. API / type design
 

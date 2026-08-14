@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "lexer.h"
+#include "parser.h"
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -25,7 +26,13 @@ int main(int argc, char* argv[]) {
 
     TokenStream tokens = lexer(buffer);
 
-    std::cout << tokens << std::endl;
+    std::cout << tokens << "\n";
+
+    // JsonValue value = parser(tokens);
+
+    // Json json(value);
+
+    // std::cout << json << std::endl;
 
     return 0;
 }

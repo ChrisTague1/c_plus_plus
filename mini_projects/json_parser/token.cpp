@@ -53,7 +53,7 @@ bool TokenStream::has_next() const {
 std::ostream& operator<<(std::ostream& os, const TokenStream& ts) {
     bool first = true;
     for (const auto& token : ts.tokens_) {
-        if (!first) os << ", ";
+        if (!first) os << "\n";
         first = false;
         os << token;
     }

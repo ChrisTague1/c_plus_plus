@@ -7,6 +7,9 @@ parser file="sample.json":
 debug file="sample.json":
     @cd mini_projects/json_parser && make debug && ./main {{file}}
 
+test:
+    @cd mini_projects/json_parser && make test
+
 files:
     @clang++ -std=c++20 experiments/files/files.cpp && ./a.out
 

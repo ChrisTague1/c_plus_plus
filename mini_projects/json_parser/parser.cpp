@@ -1,6 +1,10 @@
 #include "parser.h"
 
 #include <format>
+#include <vector>
+#include <variant>
+#include <string>
+#include <optional>
 
 std::ostream& operator<<(std::ostream& os, ParserState state) {
     switch (state) {
@@ -12,6 +16,132 @@ std::ostream& operator<<(std::ostream& os, ParserState state) {
         case ParserState::ExpectingStringOrCloseObject: return os << "ExpectingStringOrCloseObject";
     }
     return os;
+}
+
+enum class NextExpectedItem {
+    ValueOrClose,
+    CommaOrClose,
+    Value,
+    KeyOrClose,
+    Colon,
+    Key,
+    Done
+};
+
+class Frame {
+    std::optional<std::string> pending_key;
+    NextExpectedItem next_expected_item;
+
+   public:
+    JsonValue value;
+    Frame(JsonValue value, NextExpectedItem next)
+        : value(std::move(value)), pending_key(std::nullopt), next_expected_item(next) {}
+    Frame(JsonValue value)
+        : value(std::move(value)),
+          pending_key(std::nullopt),
+          next_expected_item(NextExpectedItem::Done) {}
+    static Frame object() {
+        return Frame(std::make_unique<JsonObject>(),
+                     NextExpectedItem::KeyOrClose);
+    }
+    static Frame array() {
+        return Frame(std::make_unique<JsonArray>(),
+                     NextExpectedItem::ValueOrClose);
+    }
+
+    void accept_string(std::string& s) {
+        if (auto v = std::get_if<JsonArray>(&value)) {
+            switch (next_expected_item) {
+                case NextExpectedItem::Value:
+                case NextExpectedItem::ValueOrClose:
+                    v->values.push_back(s);
+                    next_expected_item = NextExpectedItem::CommaOrClose;
+                    break;
+                default:
+                    throw std::runtime_error("Shit went wrong");
+            }
+            return;
+        }
+
+        if (std::holds_alternative<JsonObject>(value)) {
+            switch (next_expected_item) {
+                case NextExpectedItem::Value:
+                case NextExpectedItem::ValueOrClose:
+                    if (pending_key.has_value()) {
+                        auto obj = std::get<JsonObject>(value);
+                        obj.values.try_emplace(pending_key.value(), s);
+                        pending_key = std::nullopt;
+                    } else {
+                        std::runtime_error(
+                            "This might be impossible to reach idk");
+                    }
+                    break;
+                case NextExpectedItem::Key:
+                case NextExpectedItem::KeyOrClose:
+                    pending_key = s;
+                    break;
+                default:
+                    std::runtime_error("Shit went wrong");
+            }
+            return;
+        }
+
+        std::runtime_error(
+            "Tried giving a string to something that was already a primative. "
+            "Probably unreachable");
+    }
+};
+
+enum class ParserState2 {
+    ExpectingValue,
+    ExpectingStringOrClose,
+    ExpectingValueOrClose,
+    ExpectingColon
+};
+
+void handle_string(std::string s, std::vector<Frame>& stack) {
+    if (stack.empty()) {
+        stack.push_back(Frame(s));
+        return;
+    }
+
+    Frame& back = stack.back();
+
+    back.accept_string(s);
+}
+
+JsonValue parser(TokenStream& tokens) {
+    std::vector<Frame> stack;
+
+    while (tokens.has_next()) {
+        Token token = tokens.next();
+
+        switch (token.type) {
+            case TokenTypes::OpenObject:
+                stack.push_back(Frame::object());
+                break;
+            case TokenTypes::OpenArray:
+                stack.push_back(Frame::array());
+                break;
+            case TokenTypes::String:
+                handle_string(std::get<std::string>(token.data), stack);
+                break;
+            case TokenTypes::Number: {
+                auto num = std::get<float>(token.data);
+
+                if (stack.empty()) {
+                    stack.push_back(Frame(num));
+                    break;
+                }
+
+                Frame& frame = stack.back();
+
+                switch
+
+                break;
+            }
+        }
+    }
 }
 
 JsonValue parser(TokenStream& tokens) {
