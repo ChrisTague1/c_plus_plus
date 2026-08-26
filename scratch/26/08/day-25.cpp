@@ -2,36 +2,38 @@
 #include <vector>
 #include <cmath>
 
-/*
-0   1  2  3   4
-               
--4, 1, 6, 8, 11
-               
-*/
-
 void find_target(const std::vector<int>& arr, int target) {
     if (arr.size() < 2) {
         return;
     }
 
-    int left = 0;
-    int right = 1;
+    int best_left = 0;
+    int best_right = arr.size() - 1;
+
+    int left = best_left;
+    int right = best_right;
     int best = std::abs(arr[left] + arr[right] - target);
 
-    for (int i = 0; i < arr.size() - 1; ++i) {
-        for (int j = i + 1; j < arr.size(); ++j) {
-            int total = arr[i] + arr[j];
-            int diff = std::abs(total - target);
+    while (right != left) {
+        int total = arr[left] + arr[right];
+        int diff = std::abs(total - target);
 
-            if (diff < best) {
-                best = diff;
-                left = i;
-                right = j;
-            }
+        if (diff < best) {
+            best_left = left;
+            best_right = right;
+            best = diff;
+        }
+
+        if (total < target) {
+            ++left;    
+        } else if (total > target) {
+            --right;
+        } else {
+            break;
         }
     }
 
-    std::cout << "(" << left << ", " << right << ")" << std::endl;
+    std::cout << "(" << best_left << ", " << best_right << ")" << std::endl;
 }
 
 struct TestCase {
