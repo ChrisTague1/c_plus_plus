@@ -6,6 +6,8 @@
 - https://www.rfc-editor.org/info/rfc9868/#section-21
 - https://chatgpt.com/c/6aaf3538-d888-83ea-a97d-a85c92d72be5
 
+# Running linux-like
+
 ```bash
 colima start -f
 ```
@@ -32,3 +34,13 @@ docker exec udp-lab ./sender
 ```bash
 docker system prune --all --volumes --force
 ```
+
+# Commands
+
+- ifconfig
+    - will show network interfaces (NICs would be here)
+    - eth0, eth1, en1, etc.
+    - a VLAN would be eth0.1001, ex.
+    - effectively gives you 'fake' extra interfaces
+- netstat -rn -f inet
+- route -n get 239.10.10.10

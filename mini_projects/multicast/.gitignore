@@ -1,3 +1,6 @@
 receiver
 sender
 receiver_raw
+multi*
+!multi*.c
+!multi*.py
