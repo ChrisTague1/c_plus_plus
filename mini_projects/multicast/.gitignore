@@ -4,3 +4,4 @@ receiver_raw
 multi*
 !multi*.c
 !multi*.py
+*.out
