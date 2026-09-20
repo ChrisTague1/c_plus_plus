@@ -6,30 +6,30 @@ void find_target(const std::vector<int>& arr, int target) {
     if (arr.size() < 2) {
         return;
     }
-
+    
+    int left = 0;
+    int right = arr.size() - 1;
+    int total = arr[left] + arr[right];
+    int best = std::abs(total - target);
     int best_left = 0;
     int best_right = arr.size() - 1;
 
-    int left = best_left;
-    int right = best_right;
-    int best = std::abs(arr[left] + arr[right] - target);
+    while (right - left > 1) {
+        if (total >  target) {
+            --right;
+        } else if (total < target) {
+            ++left;
+        } else {
+            break;
+        }
 
-    while (right != left) {
-        int total = arr[left] + arr[right];
+        total = arr[left] + arr[right];
         int diff = std::abs(total - target);
 
         if (diff < best) {
+            best = diff;
             best_left = left;
             best_right = right;
-            best = diff;
-        }
-
-        if (total < target) {
-            ++left;    
-        } else if (total > target) {
-            --right;
-        } else {
-            break;
         }
     }
 
