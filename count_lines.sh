@@ -8,7 +8,7 @@ while IFS= read -r file; do
     lines=$(wc -l < "$file")
     printf "%5d  %s\n" "$lines" "${file#$ROOT/}"
     total=$((total + lines))
-done < <(find "$ROOT" -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | sort)
+done < <(find "$ROOT" -name "*.cpp" -o -name "*.h" -o -name "*.hpp" -o -name "*.c" | sort)
 
 echo "-----"
 printf "%5d  total\n" "$total"
