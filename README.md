@@ -12,6 +12,7 @@
 - Smart pointers
 - Lambda move semantics
 - ~~Order of fields mattering for size~~
+- [Assembly](https://www.youtube.com/watch?v=GU8MnZI0snA)
 
 # Projects
 
