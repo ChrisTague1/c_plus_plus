@@ -22,14 +22,17 @@ int main(void) {
         &dest.sin_addr
     );
 
-    const char* message = "hello from c++ :(";
+    const Message message {
+        .message_type = MessageType::JoinServer,
+        .join_server.name = "Chris"
+    };
 
     sendto(
         fd,
-        message,
-        strlen(message),
+        &message,
+        sizeof(message),
         0,
-        (struct sockaddr *) &dest,
+        reinterpret_cast<sockaddr*>(&dest),
         sizeof(dest)
     );
 

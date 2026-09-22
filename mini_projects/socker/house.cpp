@@ -14,21 +14,20 @@ int main(void) {
         .sin_addr.s_addr = INADDR_ANY,
     };
 
-    bind(fd, (struct sockaddr *) &addr, sizeof(addr));
+    bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
 
     while (true) {
-        std::cout << "this is awesome!" << std::endl;
-        char buffer[2048];
+        Message message;
 
         struct sockaddr_in sender;
         socklen_t sender_len = sizeof(sender);
 
         ssize_t n = recvfrom(
             fd,
-            buffer,
-            sizeof(buffer),
+            &message,
+            sizeof(message),
             0,
-            (struct sockaddr *) &sender,
+            reinterpret_cast<sockaddr*>(&sender),
             &sender_len
         );
 
@@ -41,7 +40,15 @@ int main(void) {
             sizeof(sender_ip)
         );
 
-        std::cout << sender_ip << ":" << ntohs(sender.sin_port) << n << buffer << "\n";
+        std::cout << sender_ip << ":" << ntohs(sender.sin_port) << " sent: " << n << " bytes\n";
+
+        switch (message.message_type) {
+            case MessageType::JoinServer:
+                std::cout << message.join_server.name << " joined the server\n";
+                break;
+            default:
+                break;
+        }
     }
 
     return 0;
