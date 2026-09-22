@@ -5,12 +5,8 @@
 - Unit testing and other testing
 - Performance optimization
 - Memory profiling
-- Viewing assembly
-- Networking
 - Dependency management/version management
 - [OOP](https://refactoring.guru/)
-- Smart pointers
-- Lambda move semantics
 - ~~Order of fields mattering for size~~
 - [Assembly](https://www.youtube.com/watch?v=GU8MnZI0snA)
 
@@ -21,6 +17,14 @@
 - Web crawler
     - host and children
     - creates live dashboard
+
+# Implement
+
+- std::map and std::set (red black tree)
+- std::unordered_map and std::unordered_set (hashing with some smart bucketing)
+    - make sure to do it with load factor
+    - write your own hash function for fun
+- open addressing map and set
 
 # Reference Docs
 

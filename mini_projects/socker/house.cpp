@@ -1,11 +1,32 @@
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include "protocol.h"
+
+struct SockAddrMapper {
+    bool operator()(const sockaddr_in& lhs, const sockaddr_in& rhs) const noexcept {
+        return lhs.sin_addr.s_addr == rhs.sin_addr.s_addr && lhs.sin_port == rhs.sin_port;
+    }
+
+    std::size_t operator()(const sockaddr_in& sa) const noexcept {
+        std::size_t h1 = std::hash<uint32_t>{}(sa.sin_addr.s_addr);
+        std::size_t h2 = std::hash<uint32_t>{}(sa.sin_port);
+
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+    }
+};
+
+using SockAddrMap = std::unordered_map<
+    sockaddr_in,
+    std::string,
+    SockAddrMapper,
+    SockAddrMapper
+>;
 
 int main(void) {
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -17,6 +38,8 @@ int main(void) {
     };
 
     bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+
+    SockAddrMap player_map;
 
     while (true) {
         Message message;
@@ -47,18 +70,29 @@ int main(void) {
         switch (message.message_type) {
             case MessageType::JoinServer: {
                 std::string_view name = message.join_server.name;
-                std::cout << name << " joined the server\n";
 
-                std::string greeting = std::format("Welcome, {}", name);
+                auto [it, inserted] = player_map.try_emplace(sender, name);
+
+                std::string reply;
+
+                if (inserted) {
+                    std::cout << name << " joined the server\n";
+                    reply = std::format("Welcome, {}", name);
+
+                } else {
+                    std::cout << name << " already joined the server, ignoring\n";
+                    reply = std::format("{}, you are pushing your luck!", name);
+                }
 
                 sendto(
                     fd,
-                    greeting.data(),
-                    greeting.length(),
+                    reply.data(),
+                    reply.length(),
                     0,
                     reinterpret_cast<sockaddr*>(&sender),
                     sizeof(sender)
                 );
+
                 break;
             }
             default:

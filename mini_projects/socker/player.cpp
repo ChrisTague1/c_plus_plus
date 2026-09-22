@@ -47,7 +47,24 @@ int main(void) {
     char buffer[256];
     ssize_t n = recv(fd, &buffer, sizeof(buffer), 0);
 
-    std::cout << n << " bytes from server: " << buffer << "\n";
+    std::cout << n << " bytes from server: ";
+    std::cout.write(buffer, n);
+    std::cout << "\n";
+
+    sendto(
+        fd,
+        &message,
+        sizeof(message),
+        0,
+        reinterpret_cast<sockaddr*>(&dest),
+        sizeof(dest)
+    );
+
+    n = recv(fd, &buffer, sizeof(buffer), 0);
+
+    std::cout << n << " bytes from server: ";
+    std::cout.write(buffer, n);
+    std::cout << "\n";
 
     close(fd);
 
