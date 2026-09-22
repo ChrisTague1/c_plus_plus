@@ -1,4 +1,6 @@
 #include <iostream>
+#include <string>
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -8,7 +10,7 @@
 int main(void) {
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    struct sockaddr_in addr {
+    sockaddr_in addr {
         .sin_family = AF_INET,
         .sin_port = htons(5000),
         .sin_addr.s_addr = INADDR_ANY,
@@ -19,7 +21,7 @@ int main(void) {
     while (true) {
         Message message;
 
-        struct sockaddr_in sender;
+        sockaddr_in sender;
         socklen_t sender_len = sizeof(sender);
 
         ssize_t n = recvfrom(
@@ -43,9 +45,22 @@ int main(void) {
         std::cout << sender_ip << ":" << ntohs(sender.sin_port) << " sent: " << n << " bytes\n";
 
         switch (message.message_type) {
-            case MessageType::JoinServer:
-                std::cout << message.join_server.name << " joined the server\n";
+            case MessageType::JoinServer: {
+                std::string_view name = message.join_server.name;
+                std::cout << name << " joined the server\n";
+
+                std::string greeting = std::format("Welcome, {}", name);
+
+                sendto(
+                    fd,
+                    greeting.data(),
+                    greeting.length(),
+                    0,
+                    reinterpret_cast<sockaddr*>(&sender),
+                    sizeof(sender)
+                );
                 break;
+            }
             default:
                 break;
         }

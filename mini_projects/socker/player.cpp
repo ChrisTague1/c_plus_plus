@@ -11,7 +11,15 @@
 int main(void) {
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    struct sockaddr_in dest {
+    sockaddr_in addr {
+        .sin_family = AF_INET,
+        .sin_addr.s_addr = INADDR_ANY,
+        .sin_port = htons(0), // kernel chooses my port
+    };
+
+    bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+
+    sockaddr_in dest {
         .sin_family = AF_INET,
         .sin_port = htons(5000),
     };
@@ -35,6 +43,11 @@ int main(void) {
         reinterpret_cast<sockaddr*>(&dest),
         sizeof(dest)
     );
+
+    char buffer[256];
+    ssize_t n = recv(fd, &buffer, sizeof(buffer), 0);
+
+    std::cout << n << " bytes from server: " << buffer << "\n";
 
     close(fd);
 
