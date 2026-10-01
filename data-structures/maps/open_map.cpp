@@ -126,6 +126,11 @@ public:
 int main() {
     /*
     Improvements:
+    - when rehashing, don't move deleted or empty items
+    - you can exit early in delete if you see something empty
+    - rehash at a threshold, not when full (maybe 75% capacity)
+    - insert appends a new key atm
+    - pass by const &
     - overwrite/replace/do nothing
     - bitmap instead of state
     */
