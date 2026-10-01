@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <optional>
 
 enum class State: uint8_t {
     EMPTY,
@@ -26,7 +27,6 @@ public:
     
     void insert(K key, V value) {
         if (size + 1 > capacity) {
-            std::cout << "reindexing..." << std::endl;
             capacity *= 2;
             auto new_data = std::make_unique<Entry[]>(capacity);
 
@@ -37,7 +37,7 @@ public:
                 for (size_t offset = 0; offset < capacity; ++offset) {
                     size_t loc = (hash + offset) % capacity;
 
-                    if (data[loc].state != State::OCCUPIED) {
+                    if (new_data[loc].state != State::OCCUPIED) {
                         new_data[loc] = std::move(data[i]);
                         break;
                     }
@@ -65,6 +65,46 @@ public:
         return;
     }
 
+    std::optional<V> remove(K& key) {
+        size_t hash = hasher(key);
+        for (size_t offset = 0; offset < capacity; ++offset) {
+            size_t loc = (hash + offset) % capacity;
+
+            if (data[loc].state == State::OCCUPIED && data[loc].key == key) {
+                data[loc].state = State::DELETED;
+                size--;
+                return data[loc].value;
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    void print_mem() {
+        std::cout << "capacity = " << capacity << "\n";
+        std::cout << "size = " << size << "\n";
+        std::cout << "{\n";
+        bool first = true;
+        for (size_t i = 0; i < capacity; ++i) {
+            const auto& entry = data[i];
+
+            if (!first) {
+                std::cout << ",\n";
+            }
+            first = false;
+
+            if (entry.state == State::DELETED) {
+                std::cout << "DELETED";
+            } else if (entry.state == State::EMPTY) {
+                std::cout << "EMPTY";
+            } else {
+                std::cout << "\t" << entry.key << ": " << entry.value;
+            }
+        }
+
+        std::cout << "\n}\n";
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const OpenMap& map) {
         os << "{\n";
         bool first = true;
@@ -87,16 +127,38 @@ int main() {
     /*
     Improvements:
     - overwrite/replace/do nothing
-    - way to view complete memory layout
     - bitmap instead of state
-    - delete
     */
-    OpenMap<std::string, int> map(1);
+    OpenMap<std::string, int> map(2);
 
-    map.insert("hi", 50);
-    map.insert("bye", 40);
+    map.insert("a", 1);
+    map.insert("b", 2);
+    map.insert("c", 3);
+    // map.print_mem();
 
-    std::cout << map << std::endl;
+    std::string c = "c";
+
+    std::optional<int> val = map.remove(c);
+
+    // if (val.has_value()) {
+    //     std::cout << "value: " << val.value() << "\n";
+    // } else {
+    //     std::cout << "no value\n";
+    // }
+
+    // map.print_mem();
+
+    map.insert("c", 3);
+    map.insert("d", 3);
+    map.insert("e", 3);
+    map.insert("f", 3);
+    map.insert("g", 3);
+    map.insert("h", 3);
+    map.insert("i", 3);
+    map.insert("j", 3);
+    map.insert("k", 3);
+
+    map.print_mem();
 
     return 0;
 }
